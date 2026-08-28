@@ -10,10 +10,12 @@ import { workHistoryRouter } from "./routes/workHistory.js";
 import { vendorRouter } from "./routes/vendor.js";
 import { replantRouter } from "./routes/replant.js";
 import { complaintRouter } from "./routes/complaint.js";
+import { fileRouter } from "./routes/file.js";
 import { ForbiddenError } from "./auth/scope.js";
 import { NotFoundError, ValidationError } from "./errors.js";
 import { prisma } from "./db.js";
 import type { NextFunction, Request, Response } from "express";
+import { MulterError } from "multer";
 
 // TypeScriptの出力先はCommonJSのため、ESM専用のimport.metaではなく
 // Node.jsが標準で提供する__dirnameをそのまま使う。
@@ -59,6 +61,7 @@ export function createApp() {
   app.use("/api/vendors", vendorRouter);
   app.use("/api/replants", replantRouter);
   app.use("/api/complaints", complaintRouter);
+  app.use("/api/files", fileRouter);
 
   if (isProd) {
     app.use(express.static(WEB_DIST_DIR));
@@ -81,6 +84,12 @@ export function createApp() {
     }
     if (err instanceof ValidationError) {
       res.status(400).json({ error: err.message });
+      return;
+    }
+    if (err instanceof MulterError) {
+      const message =
+        err.code === "LIMIT_FILE_SIZE" ? "ファイルサイズが上限を超えています。" : "ファイルアップロードに失敗しました。";
+      res.status(400).json({ error: message });
       return;
     }
     console.error(err);

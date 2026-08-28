@@ -3,6 +3,6 @@ dist/
 build/
 .env
 !.env.example
-storage/
+/api/storage/
 *.log
 .DS_Store
