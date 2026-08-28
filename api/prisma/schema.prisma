@@ -1,0 +1,373 @@
+// (仮称)樹木管理システム フルコーディング版
+// Power Platform(Dataverse)版で確定した要件定義・ドメインモデルを
+// PostgreSQL + Prismaへ翻訳したスキーマ。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =========================================================
+// 認証・RBAC
+// =========================================================
+
+enum Role {
+  system_admin // システム管理者(暗黙のスーパーユーザー)
+  facility_admin // 各所管理者
+  ward_staff // 区一般職員
+  contractor // 街路樹管理委託事業者
+  partner_admin // 協定管理者
+  readonly_other // その他(閲覧専用)
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  displayName  String   @map("display_name")
+  role         Role
+  isActive     Boolean  @default(true) @map("is_active")
+  vendorId     String?  @map("vendor_id") // contractor/partner_adminロールが紐づくvendor(自分のみ閲覧用)
+  totpSecret   String?  @map("totp_secret") // TOTP多要素認証(任意)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  vendor        Vendor?        @relation(fields: [vendorId], references: [id])
+  refreshTokens RefreshToken[]
+  userAreas     UserArea[]
+  auditLogs     AuditLog[]
+  uploadedFiles File[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+// 「担当エリア」= 路線番号(RouteNumber)の集合として表現する。
+// Dataverse版のBusiness Unit階層の代替。
+model Area {
+  id            String   @id @default(uuid())
+  name          String
+  routeNumbers  String[] @map("route_numbers")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  userAreas   UserArea[]
+  vendorAreas VendorArea[]
+
+  @@map("areas")
+}
+
+model UserArea {
+  userId String @map("user_id")
+  areaId String @map("area_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  area Area @relation(fields: [areaId], references: [id], onDelete: Cascade)
+
+  @@id([userId, areaId])
+  @@map("user_areas")
+}
+
+model VendorArea {
+  vendorId String @map("vendor_id")
+  areaId   String @map("area_id")
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  area   Area   @relation(fields: [areaId], references: [id], onDelete: Cascade)
+
+  @@id([vendorId, areaId])
+  @@map("vendor_areas")
+}
+
+// =========================================================
+// 監査ログ・ファイル
+// =========================================================
+
+enum AuditAction {
+  INSERT
+  UPDATE
+  DELETE
+}
+
+model AuditLog {
+  id            String      @id @default(uuid())
+  tableName     String      @map("table_name")
+  recordId      String      @map("record_id")
+  action        AuditAction
+  changedByUserId String?   @map("changed_by_user_id")
+  changedAt     DateTime    @default(now()) @map("changed_at")
+  diff          Json?
+
+  changedByUser User? @relation(fields: [changedByUserId], references: [id])
+
+  @@index([tableName, recordId])
+  @@map("audit_log")
+}
+
+model File {
+  id               String   @id @default(uuid())
+  storageKey       String   @map("storage_key")
+  originalFilename String   @map("original_filename")
+  mimeType         String   @map("mime_type")
+  sizeBytes        Int      @map("size_bytes")
+  uploadedByUserId String?  @map("uploaded_by_user_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  uploadedByUser  User?            @relation(fields: [uploadedByUserId], references: [id])
+  diagnosisReport Diagnosis?       @relation("DiagnosisReportFile")
+  workHistoryPhotos WorkHistoryPhoto[]
+
+  @@map("files")
+}
+
+// =========================================================
+// ドメインモデル(7テーブル)
+// =========================================================
+
+enum TreeStatus {
+  existing   @map("現存")
+  removed    @map("伐採済")
+  replanted  @map("植替え済")
+}
+
+enum LeafType {
+  evergreen @map("常緑")
+  deciduous @map("落葉")
+}
+
+enum SizeClass {
+  tall   @map("高木")
+  medium @map("中木")
+  short  @map("低木")
+}
+
+enum HealthStatus {
+  A
+  B1
+  B2
+  C
+}
+
+model Tree {
+  id               String       @id @default(uuid())
+  treeNumber       String       @unique @map("tree_number")
+  routeNumber      String?      @map("route_number")
+  address          String?
+  treeHeight       Decimal?     @map("tree_height") @db.Decimal(5, 1)
+  trunkGirth       Decimal?     @map("trunk_girth") @db.Decimal(6, 0)
+  crownSpread      Decimal?     @map("crown_spread") @db.Decimal(5, 1)
+  notes            String?
+  species          String?
+  leafType         LeafType?    @map("leaf_type")
+  sizeClass        SizeClass?   @map("size_class")
+  healthStatus     HealthStatus? @map("health_status")
+  status           TreeStatus   @default(existing)
+  plantedDate      DateTime?    @map("planted_date") @db.Date
+  hasStake         Boolean      @default(false) @map("has_stake")
+  hasTag           Boolean      @default(false) @map("has_tag")
+  latitude         Decimal      @db.Decimal(9, 6)
+  longitude        Decimal      @db.Decimal(9, 6)
+  replantFromTreeId String?     @map("replant_from_tree_id")
+  deletedAt        DateTime?    @map("deleted_at")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  replantFromTree Tree?  @relation("TreeReplant", fields: [replantFromTreeId], references: [id])
+  replantedTrees  Tree[] @relation("TreeReplant")
+
+  diagnoses    Diagnosis[]
+  inspections  Inspection[]
+  workHistories WorkHistory[]
+  complaints   Complaint[]
+  replantsAsOld Replant[] @relation("ReplantOldTree")
+  replantsAsNew Replant[] @relation("ReplantNewTree")
+
+  @@index([status, deletedAt])
+  @@index([latitude, longitude])
+  @@map("trees")
+}
+
+model Diagnosis {
+  id                   String   @id @default(uuid())
+  diagnosisNumber      String   @map("diagnosis_number")
+  treeId               String   @map("tree_id")
+  diagnosisDate        DateTime @map("diagnosis_date") @db.Date
+  arborist             String?
+  vigor                String?
+  shape                String?
+  rootFindings         String?  @map("root_findings")
+  trunkFindings        String?  @map("trunk_findings")
+  branchFindings       String?  @map("branch_findings")
+  visualJudgement      String?  @map("visual_judgement")
+  overallJudgement     String?  @map("overall_judgement")
+  judgementReason      String?  @map("judgement_reason")
+  nextDiagnosisTiming  String?  @map("next_diagnosis_timing")
+  needsDetailedDiagnosis Boolean @default(false) @map("needs_detailed_diagnosis")
+  decayHollowRate      Decimal? @map("decay_hollow_rate") @db.Decimal(5, 1)
+  reportFileId         String?  @unique @map("report_file_id")
+  deletedAt            DateTime? @map("deleted_at")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  tree       Tree  @relation(fields: [treeId], references: [id])
+  reportFile File? @relation("DiagnosisReportFile", fields: [reportFileId], references: [id])
+
+  @@map("diagnoses")
+}
+
+model Inspection {
+  id                     String   @id @default(uuid())
+  inspectionNumber       String   @map("inspection_number")
+  treeId                 String   @map("tree_id")
+  inspectionDate         DateTime @map("inspection_date") @db.Date
+  inspector              String?
+  overRoadLimit          Boolean  @default(false) @map("over_road_limit")
+  overSidewalkLimit      Boolean  @default(false) @map("over_sidewalk_limit")
+  conflictWithFacility   Boolean  @default(false) @map("conflict_with_facility")
+  stakeNeedsFix          Boolean  @default(false) @map("stake_needs_fix")
+  bigBranchDamage        Boolean  @default(false) @map("big_branch_damage")
+  rootLiftPavementCrack  Boolean  @default(false) @map("root_lift_pavement_crack")
+  leafAbnormal           Boolean  @default(false) @map("leaf_abnormal")
+  tipDieback             Boolean  @default(false) @map("tip_dieback")
+  severeDecline          Boolean  @default(false) @map("severe_decline")
+  mushroom               Boolean  @default(false)
+  barkDecay              Boolean  @default(false) @map("bark_decay")
+  pestDamage             Boolean  @default(false) @map("pest_damage")
+  swaying                Boolean  @default(false)
+  unnaturalLean          Boolean  @default(false) @map("unnatural_lean")
+  inspectionResult       String?  @map("inspection_result")
+  otherNotes             String?  @map("other_notes")
+  deletedAt              DateTime? @map("deleted_at")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  tree Tree @relation(fields: [treeId], references: [id])
+
+  @@map("inspections")
+}
+
+model Vendor {
+  id           String   @id @default(uuid())
+  vendorName   String   @map("vendor_name")
+  vendorType   String?  @map("vendor_type")
+  areaInCharge String?  @map("area_in_charge")
+  contactInfo  String?  @map("contact_info")
+  deletedAt    DateTime? @map("deleted_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  users         User[]
+  workHistories WorkHistory[]
+  vendorAreas   VendorArea[]
+
+  @@map("vendors")
+}
+
+enum WorkType {
+  pruning        @map("剪定")
+  felling        @map("伐採")
+  stumpRemoval   @map("伐根")
+  stakeWork      @map("支柱設置撤去")
+  fertilizing    @map("施肥")
+  soilImprovement @map("土壌改良")
+  other          @map("その他")
+}
+
+enum PerformerType {
+  ward     @map("区")
+  contractor @map("委託業者")
+}
+
+model WorkHistory {
+  id            String        @id @default(uuid())
+  workNumber    String        @map("work_number")
+  treeId        String        @map("tree_id")
+  workType      WorkType      @map("work_type")
+  workDate      DateTime      @map("work_date") @db.Date
+  performerType PerformerType @map("performer_type")
+  workNotes     String?       @map("work_notes")
+  vendorId      String?       @map("vendor_id")
+  deletedAt     DateTime?     @map("deleted_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  tree   Tree                @relation(fields: [treeId], references: [id])
+  vendor Vendor?             @relation(fields: [vendorId], references: [id])
+  photos WorkHistoryPhoto[]
+
+  @@map("work_histories")
+}
+
+enum PhotoType {
+  before @map("作業前")
+  after  @map("作業後")
+}
+
+model WorkHistoryPhoto {
+  id            String    @id @default(uuid())
+  workHistoryId String    @map("work_history_id")
+  fileId        String    @map("file_id")
+  photoType     PhotoType @map("photo_type")
+  sortOrder     Int       @default(0) @map("sort_order")
+
+  workHistory WorkHistory @relation(fields: [workHistoryId], references: [id], onDelete: Cascade)
+  file        File        @relation(fields: [fileId], references: [id])
+
+  @@map("work_history_photos")
+}
+
+model Replant {
+  id             String   @id @default(uuid())
+  replantNumber  String   @map("replant_number")
+  replantDate    DateTime @map("replant_date") @db.Date
+  background     String?
+  oldTreeId      String?  @map("old_tree_id")
+  newTreeId      String?  @map("new_tree_id")
+  deletedAt      DateTime? @map("deleted_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  oldTree Tree? @relation("ReplantOldTree", fields: [oldTreeId], references: [id])
+  newTree Tree? @relation("ReplantNewTree", fields: [newTreeId], references: [id])
+
+  @@map("replants")
+}
+
+enum ComplaintStatus {
+  received   @map("受付")
+  inProgress @map("対応中")
+  resolved   @map("対応済")
+}
+
+model Complaint {
+  id              String          @id @default(uuid())
+  complaintNumber String          @map("complaint_number")
+  treeId          String          @map("tree_id")
+  routeNumber     String?         @map("route_number")
+  requestDate     DateTime        @map("request_date") @db.Date
+  requestContent  String?         @map("request_content")
+  responseDate    DateTime?       @map("response_date") @db.Date
+  responseRecord  String?         @map("response_record")
+  status          ComplaintStatus @default(received)
+  deletedAt       DateTime?       @map("deleted_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  tree Tree @relation(fields: [treeId], references: [id])
+
+  @@map("complaints")
+}
