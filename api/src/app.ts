@@ -11,6 +11,8 @@ import { vendorRouter } from "./routes/vendor.js";
 import { replantRouter } from "./routes/replant.js";
 import { complaintRouter } from "./routes/complaint.js";
 import { fileRouter } from "./routes/file.js";
+import { areaRouter } from "./routes/area.js";
+import { userRouter } from "./routes/user.js";
 import { ForbiddenError } from "./auth/scope.js";
 import { NotFoundError, ValidationError } from "./errors.js";
 import { prisma } from "./db.js";
@@ -62,6 +64,8 @@ export function createApp() {
   app.use("/api/replants", replantRouter);
   app.use("/api/complaints", complaintRouter);
   app.use("/api/files", fileRouter);
+  app.use("/api/areas", areaRouter);
+  app.use("/api/users", userRouter);
 
   if (isProd) {
     app.use(express.static(WEB_DIST_DIR));
