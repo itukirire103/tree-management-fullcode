@@ -14,7 +14,9 @@ import { prisma } from "./db.js";
 type PrismaDelegate = {
   findMany: (args: any) => Promise<any[]>;
   findFirst: (args: any) => Promise<any>;
-  count: (args: any) => Promise<number>;
+  // countはPrismaの拡張機能(監査ログ)適用後、型上はnumber | {}に広がるため
+  // anyで受ける(実行時は常にnumberが返る)。
+  count: (args: any) => Promise<any>;
   create: (args: any) => Promise<any>;
   update: (args: any) => Promise<any>;
 };

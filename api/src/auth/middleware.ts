@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import type { Role } from "@prisma/client";
 import { verifyAccessToken } from "./jwt.js";
 import { prisma } from "../db.js";
+import { runWithAuditContext } from "../audit/context.js";
 
 export type AuthenticatedUser = {
   id: string;
@@ -38,7 +39,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       vendorId: user.vendorId,
       areaIds: user.userAreas.map((a) => a.areaId),
     };
-    next();
+    runWithAuditContext(user.id, next);
   } catch {
     res.status(401).json({ error: "トークンが無効です。" });
   }
