@@ -2,11 +2,17 @@ import jwt from "jsonwebtoken";
 import crypto from "node:crypto";
 import type { Role } from "@prisma/client";
 
-const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
-const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-if (!ACCESS_SECRET || !REFRESH_SECRET) {
-  throw new Error("JWT_ACCESS_SECRET / JWT_REFRESH_SECRET is not set");
+// process.env.* は string | undefined 型のため、関数内から参照すると
+// TypeScriptがnarrowingを引き継げない。ガード後に別定数へ入れ直すことで、
+// 以降は確実にstring型として扱えるようにする。
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is not set`);
+  return value;
 }
+
+const ACCESS_SECRET: string = requireEnv("JWT_ACCESS_SECRET");
+const REFRESH_SECRET: string = requireEnv("JWT_REFRESH_SECRET");
 
 const ACCESS_EXPIRES_IN = process.env.JWT_ACCESS_EXPIRES_IN ?? "15m";
 const REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN ?? "30d";
