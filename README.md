@@ -12,13 +12,20 @@ Power Platform版の開発では、バックエンド(テーブル・セキュ�
 
 ## 技術スタック
 
-- バックエンド: Node.js + TypeScript + Express + Prisma
+- バックエンド: Node.js + TypeScript + Express + Prisma **6.19.3(意図的に固定)**
 - フロントエンド: React + Vite + TypeScript + react-leaflet + TanStack Query
-- DB: PostgreSQL(開発・本番ともに [Neon](https://neon.tech) の無料枠を使用)
+- DB: PostgreSQL(開発・本番ともに [Neon](https://neon.tech) の無料枠を使用。プール接続と直接接続を用途で使い分け)
 - 地図: Leaflet + Leaflet.markercluster
 - 認証: 自前JWT(アクセストークン + ローテーション式リフレッシュトークン)
+- デプロイ先(予定): Render無料枠
 
 設計の詳細は開発時に作成した計画ドキュメントを参照(技術選定の理由・フェーズ構成・非機能要件の対応方針など)。
+
+### 技術選定にあたっての調査メモ
+
+- **Prisma 7ではなく6.19.3を採用**: `npm install`時点でのlatestはPrisma 7だったが、調査の結果「過去最多クラスの破壊的変更」「pgドライバの接続タイムアウトが既定で無期限」等、まだ枯れていないことが分かった。実績のある6系に明示的に固定した(`--save-exact`)。Power Platform版でPCFビルドツールの未成熟さに苦しんだ反省を踏まえた判断。
+- **Neonの接続文字列はプール接続(`DATABASE_URL`)と直接接続(`DIRECT_DATABASE_URL`)を分離**: 常駐サーバーからのアプリケーションクエリはプール接続、`prisma migrate`等のマイグレーションは直接接続、という公式推奨構成。
+- **Render無料枠のコールドスタート(15分無アクセスでスリープ、復帰に30〜60秒)は許容し、デプロイ後にREADMEで明記する方針**とした。DB(Neon)・ファイルストレージ(Cloudflare R2)は別サービスのため影響を受けない。
 
 ## セットアップ
 

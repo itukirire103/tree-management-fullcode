@@ -7,7 +7,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  // アプリの実行時クエリはNeonのプール接続(-pooler)を使う。
+  // マイグレーションはプールを経由しない直接接続が必要なため、
+  // directUrlを別途指定する(Prisma公式のNeon連携ドキュメント通り)。
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 // =========================================================
