@@ -190,7 +190,7 @@ export type Replant = {
 export type Complaint = {
   id: string;
   complaintNumber: string;
-  treeId: string;
+  treeId: string | null;
   routeNumber: string | null;
   requestDate: string;
   requestContent: string | null;

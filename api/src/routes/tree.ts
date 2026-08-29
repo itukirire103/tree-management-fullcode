@@ -5,6 +5,8 @@ import { requireAuth } from "../auth/middleware.js";
 import { checkPermissionAndGetFilter } from "../auth/scope.js";
 import { parsePagination, paginatedResponse } from "../pagination.js";
 import { NotFoundError } from "../errors.js";
+import { parseOrThrow } from "../validation/parse.js";
+import { treeCreateSchema, treeUpdateSchema } from "../validation/schemas.js";
 
 export const treeRouter = Router();
 treeRouter.use(requireAuth);
@@ -71,7 +73,8 @@ treeRouter.get("/:id", async (req, res) => {
 
 treeRouter.post("/", async (req, res) => {
   await checkPermissionAndGetFilter("tree", "create", req.user!);
-  const tree = await prisma.tree.create({ data: req.body as Prisma.TreeUncheckedCreateInput });
+  const data = parseOrThrow(treeCreateSchema, req.body);
+  const tree = await prisma.tree.create({ data: data as Prisma.TreeUncheckedCreateInput });
   res.status(201).json(tree);
 });
 
@@ -82,9 +85,10 @@ treeRouter.patch("/:id", async (req, res) => {
     | undefined;
   const existing = await prisma.tree.findFirst({ where: { id, deletedAt: null, ...filter } });
   if (!existing) throw new NotFoundError();
+  const data = parseOrThrow(treeUpdateSchema, req.body);
   const tree = await prisma.tree.update({
     where: { id },
-    data: req.body as Prisma.TreeUncheckedUpdateInput,
+    data: data as Prisma.TreeUncheckedUpdateInput,
   });
   res.json(tree);
 });

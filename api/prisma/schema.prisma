@@ -365,7 +365,9 @@ enum ComplaintStatus {
 model Complaint {
   id              String          @id @default(uuid())
   complaintNumber String          @map("complaint_number")
-  treeId          String          @map("tree_id")
+  // 要件定義書上は任意(「特定の樹木に紐づかない陳情もあるため任意」)。
+  // 樹木未特定の苦情はrouteNumberのみで手がかりとして記録する。
+  treeId          String?         @map("tree_id")
   routeNumber     String?         @map("route_number")
   requestDate     DateTime        @map("request_date") @db.Date
   requestContent  String?         @map("request_content")
@@ -376,7 +378,7 @@ model Complaint {
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
 
-  tree Tree @relation(fields: [treeId], references: [id])
+  tree Tree? @relation(fields: [treeId], references: [id])
 
   @@map("complaints")
 }

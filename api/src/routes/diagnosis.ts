@@ -1,5 +1,6 @@
 import { createCrudRouter, prisma } from "../crud.js";
 import type { Prisma } from "@prisma/client";
+import { diagnosisCreateSchema, diagnosisUpdateSchema } from "../validation/schemas.js";
 
 // diagnosis.overallJudgement("A"/"B1"/"B2"/"C")が樹木マスタのhealthStatusと
 // 同じ値体系であることを前提に、そのまま反映する。
@@ -10,6 +11,8 @@ export const diagnosisRouter = createCrudRouter({
   delegate: prisma.diagnosis,
   orderBy: { diagnosisDate: "desc" },
   treeIdFilter: true,
+  createSchema: diagnosisCreateSchema,
+  updateSchema: diagnosisUpdateSchema,
   // 業務ロジック(Dataverse版ではPower Automateで実装): 樹木診断結果が登録されると
   // 樹木マスタの健全度を自動更新する。
   onCreate: async (data) => {

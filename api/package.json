@@ -30,7 +30,8 @@
     "multer": "^2.2.0",
     "otplib": "^13.5.0",
     "prisma": "6.19.3",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "zod": "4.5.1"
   },
   "overrides": {
     "deepmerge-ts": "^8.0.2"

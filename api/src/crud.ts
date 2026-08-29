@@ -1,9 +1,11 @@
 import { Router } from "express";
+import type { ZodType } from "zod";
 import type { Entity } from "./auth/rbac.js";
 import { requireAuth } from "./auth/middleware.js";
 import { checkPermissionAndGetFilter } from "./auth/scope.js";
 import { parsePagination, paginatedResponse } from "./pagination.js";
 import { NotFoundError } from "./errors.js";
+import { parseOrThrow } from "./validation/parse.js";
 import { prisma } from "./db.js";
 
 // Prismaの各モデルデリゲート(prisma.tree, prisma.diagnosis等)はモデルごとに
@@ -33,6 +35,10 @@ type CrudRouterConfig = {
   // 他テーブルへの副作用を伴う業務ロジック(Dataverse版でのPower Automate相当)を
   // トランザクション付きで差し込むための拡張点。
   onCreate?: (data: unknown) => Promise<unknown>;
+  // POST/PATCHのreq.bodyを検証するzodスキーマ。型・必須項目・余計なフィールドの
+  // 混入(id/createdAt等)を弾く。全エンティティ共通で必須にし、指定漏れを防ぐ。
+  createSchema: ZodType;
+  updateSchema: ZodType;
 };
 
 /**
@@ -42,7 +48,16 @@ type CrudRouterConfig = {
  * 個別のルートファイル側で追加する。
  */
 export function createCrudRouter(config: CrudRouterConfig): Router {
-  const { entity, delegate, orderBy, treeIdFilter = false, softDelete = true, onCreate } = config;
+  const {
+    entity,
+    delegate,
+    orderBy,
+    treeIdFilter = false,
+    softDelete = true,
+    onCreate,
+    createSchema,
+    updateSchema,
+  } = config;
   const router = Router();
   router.use(requireAuth);
 
@@ -74,7 +89,8 @@ export function createCrudRouter(config: CrudRouterConfig): Router {
 
   router.post("/", async (req, res) => {
     await checkPermissionAndGetFilter(entity, "create", req.user!);
-    const record = onCreate ? await onCreate(req.body) : await delegate.create({ data: req.body });
+    const data = parseOrThrow(createSchema, req.body);
+    const record = onCreate ? await onCreate(data) : await delegate.create({ data });
     res.status(201).json(record);
   });
 
@@ -83,7 +99,8 @@ export function createCrudRouter(config: CrudRouterConfig): Router {
     const where = { id: req.params.id, ...(softDelete ? { deletedAt: null } : {}), ...filter };
     const existing = await delegate.findFirst({ where });
     if (!existing) throw new NotFoundError();
-    const record = await delegate.update({ where: { id: req.params.id }, data: req.body });
+    const data = parseOrThrow(updateSchema, req.body);
+    const record = await delegate.update({ where: { id: req.params.id }, data });
     res.json(record);
   });
 

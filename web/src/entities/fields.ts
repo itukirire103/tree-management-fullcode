@@ -133,7 +133,8 @@ export const REPLANT_FIELDS: FieldConfig[] = [
 
 export const COMPLAINT_FIELDS: FieldConfig[] = [
   { key: "complaintNumber", label: "苦情番号", type: "text", required: true },
-  { key: "treeId", label: "対象樹木", type: "treeSelect", required: true },
+  // 要件定義書上は任意(特定の樹木に紐づかない陳情もあるため)。
+  { key: "treeId", label: "対象樹木", type: "treeSelect" },
   { key: "routeNumber", label: "路線番号", type: "text" },
   { key: "requestDate", label: "受付日", type: "date", required: true },
   { key: "requestContent", label: "要望内容", type: "textarea" },

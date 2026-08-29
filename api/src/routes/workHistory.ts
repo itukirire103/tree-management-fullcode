@@ -3,12 +3,20 @@ import { createCrudRouter, prisma } from "../crud.js";
 import { requireAuth } from "../auth/middleware.js";
 import { checkPermissionAndGetFilter } from "../auth/scope.js";
 import { NotFoundError } from "../errors.js";
+import { parseOrThrow } from "../validation/parse.js";
+import {
+  workHistoryCreateSchema,
+  workHistoryPhotoCreateSchema,
+  workHistoryUpdateSchema,
+} from "../validation/schemas.js";
 
 export const workHistoryRouter: Router = createCrudRouter({
   entity: "workHistory",
   delegate: prisma.workHistory,
   orderBy: { workDate: "desc" },
   treeIdFilter: true,
+  createSchema: workHistoryCreateSchema,
+  updateSchema: workHistoryUpdateSchema,
 });
 
 // 作業前後の写真登録(機能要件#9)。ファイルは事前に /api/files でアップロード済みとし、
@@ -21,11 +29,7 @@ workHistoryRouter.post("/:id/photos", requireAuth, async (req, res) => {
   });
   if (!workHistory) throw new NotFoundError();
 
-  const { fileId, photoType, sortOrder } = req.body as {
-    fileId: string;
-    photoType: "before" | "after";
-    sortOrder?: number;
-  };
+  const { fileId, photoType, sortOrder } = parseOrThrow(workHistoryPhotoCreateSchema, req.body);
   const photo = await prisma.workHistoryPhoto.create({
     data: { workHistoryId, fileId, photoType, sortOrder: sortOrder ?? 0 },
   });
