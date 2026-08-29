@@ -11,3 +11,15 @@ export function canEditTree(role: Role): boolean {
   // contractorはエリア範囲内のみ更新可(サーバー側でエリア判定される)。
   return canCreateTree(role) || role === "contractor";
 }
+
+// api/src/auth/rbac.ts の PERMISSION_MATRIX.vendor をミラーリング。
+// readonly_otherはvendorへのアクセス権が無い(NONE)ため、メニューからも隠す
+// (機能要件#4: メニュー画面はアカウント種類毎に表示を変えること)。
+export function canViewVendors(role: Role): boolean {
+  return role !== "readonly_other";
+}
+
+// PERMISSION_MATRIX.complaint も readonly_other は NONE。
+export function canViewComplaints(role: Role): boolean {
+  return role !== "readonly_other";
+}

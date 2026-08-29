@@ -1,16 +1,26 @@
 import { Link, useNavigate, useParams } from "react-router";
 import { treeEntity, TREE_LINKED_ENTITIES } from "../../entities/config";
 import { HEALTH_STATUS_LABELS, TREE_STATUS_LABELS } from "../../lib/types";
+import { useAuth } from "../../auth/AuthContext";
+import { canViewComplaints } from "../../lib/permissions";
 
 // Dataverse版のツリーフォームのサブグリッド(診断・点検・作業履歴・苦情)に相当する、
 // 樹木を起点とした関連レコード一覧をまとめて見せる詳細ページ。
 export function TreeDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: tree, isLoading } = treeEntity.queries.useDetail(id);
   const deleteMutation = treeEntity.queries.useDelete();
 
   if (isLoading || !tree) return <div className="page-loading">読み込み中...</div>;
+
+  // complaintはPERMISSION_MATRIX上readonly_otherにアクセス権が無い(NONE)ため、
+  // 表示すると一覧取得が403になる。権限のあるロールのみ表示する
+  // (機能要件#4: メニュー画面はアカウント種類毎に表示を変えること)。
+  const visibleLinkedEntities = TREE_LINKED_ENTITIES.filter(
+    (linked) => linked.key !== "complaint" || !user || canViewComplaints(user.role)
+  );
 
   const handleDelete = async () => {
     if (!confirm("この樹木を削除してよろしいですか?(論理削除)")) return;
@@ -51,7 +61,7 @@ export function TreeDetailPage() {
         <dd>{tree.notes ?? "-"}</dd>
       </dl>
 
-      {TREE_LINKED_ENTITIES.map((linked) => (
+      {visibleLinkedEntities.map((linked) => (
         <TreeLinkedSection key={linked.key} entity={linked} treeId={tree.id} />
       ))}
     </div>

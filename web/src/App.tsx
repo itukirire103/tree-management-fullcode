@@ -7,6 +7,7 @@ import { AppLayout } from "./layout/AppLayout";
 import { MapPage } from "./features/map/MapPage";
 import { TreeDetailPage } from "./features/tree/TreeDetailPage";
 import { AreasPage } from "./features/areas/AreasPage";
+import { TreeStatsPage } from "./features/stats/TreeStatsPage";
 import { MfaSettingsPage } from "./features/settings/MfaSettingsPage";
 import { AuditLogPage } from "./features/audit/AuditLogPage";
 import { EntityListPage } from "./entities/EntityListPage";
@@ -57,6 +58,7 @@ function App() {
 
               <Route path="/trees" element={<EntityListPage entity={treeEntity} rowLinkLabel="詳細" />} />
               <Route path="/trees/new" element={<EntityFormPage entity={treeEntity} backTo="/trees" />} />
+              <Route path="/trees/stats" element={<TreeStatsPage />} />
               <Route path="/trees/:id" element={<TreeDetailPage />} />
               <Route path="/trees/:id/edit" element={<EntityFormPage entity={treeEntity} />} />
 

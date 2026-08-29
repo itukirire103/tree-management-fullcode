@@ -159,7 +159,26 @@ describe("replantCreateSchema", () => {
       replantNumber: "R-001",
       replantDate: new Date("2026-08-01"),
       oldTreeId: "not-a-uuid",
+      newTreeId: crypto.randomUUID(),
     });
     expect(result.success).toBe(false);
+  });
+
+  it("要件定義書上は必須のため、oldTreeId/newTreeIdが無いと失敗する", () => {
+    const result = replantCreateSchema.safeParse({
+      replantNumber: "R-001",
+      replantDate: new Date("2026-08-01"),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("oldTreeId/newTreeIdが両方揃っていれば成功する", () => {
+    const result = replantCreateSchema.safeParse({
+      replantNumber: "R-001",
+      replantDate: new Date("2026-08-01"),
+      oldTreeId: crypto.randomUUID(),
+      newTreeId: crypto.randomUUID(),
+    });
+    expect(result.success).toBe(true);
   });
 });

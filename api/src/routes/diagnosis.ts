@@ -10,6 +10,7 @@ import {
   diagnosisPhotoCreateSchema,
   diagnosisUpdateSchema,
 } from "../validation/schemas.js";
+import { DIAGNOSIS_EXPORT_COLUMNS } from "../exportColumns.js";
 
 // diagnosis.overallJudgement("A"/"B1"/"B2"/"C")が樹木マスタのhealthStatusと
 // 同じ値体系であることを前提に、そのまま反映する。
@@ -22,6 +23,8 @@ export const diagnosisRouter: Router = createCrudRouter({
   treeIdFilter: true,
   createSchema: diagnosisCreateSchema,
   updateSchema: diagnosisUpdateSchema,
+  exportColumns: DIAGNOSIS_EXPORT_COLUMNS,
+  dateFilterField: "diagnosisDate",
   // 業務ロジック(Dataverse版ではPower Automateで実装): 樹木診断結果が登録されると
   // 樹木マスタの健全度を自動更新する。
   onCreate: async (data) => {

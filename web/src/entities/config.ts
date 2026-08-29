@@ -22,6 +22,12 @@ export type EntityDef<T extends { id: string }> = {
   // 複数枚の写真添付(被害部写真・点検写真等)を持つエンティティのみ設定する。
   // 編集画面(EntityFormPage)でレコードid確定後にのみ表示される。
   photoConfig?: { label: string; maxCount?: number };
+  // CSV/Excel出力(機能要件#11)。バックエンドのGET {path}/export?format=csv|xlsxに対応する
+  // エンティティのみtrueにする(全エンティティで有効)。
+  exportable?: boolean;
+  // 期間指定検索(機能要件#13)。バックエンドでdateFilterFieldが設定済みのエンティティのみ、
+  // 一覧画面に開始日/終了日の入力欄を表示する。
+  dateRangeFilter?: boolean;
 };
 
 export const treeEntity: EntityDef<Tree> = {
@@ -31,6 +37,7 @@ export const treeEntity: EntityDef<Tree> = {
   fields: TREE_FIELDS,
   queries: createEntityQueries<Tree>("/trees"),
   listColumns: ["treeNumber", "species", "status", "healthStatus", "address"],
+  exportable: true,
 };
 
 export const diagnosisEntity: EntityDef<Diagnosis> = {
@@ -41,6 +48,8 @@ export const diagnosisEntity: EntityDef<Diagnosis> = {
   queries: createEntityQueries<Diagnosis>("/diagnoses"),
   listColumns: ["diagnosisNumber", "diagnosisDate", "overallJudgement", "arborist"],
   photoConfig: { label: "被害部写真" },
+  exportable: true,
+  dateRangeFilter: true,
 };
 
 export const inspectionEntity: EntityDef<Inspection> = {
@@ -51,6 +60,8 @@ export const inspectionEntity: EntityDef<Inspection> = {
   queries: createEntityQueries<Inspection>("/inspections"),
   listColumns: ["inspectionNumber", "inspectionDate", "inspector", "inspectionResult"],
   photoConfig: { label: "点検写真", maxCount: 5 },
+  exportable: true,
+  dateRangeFilter: true,
 };
 
 export const workHistoryEntity: EntityDef<WorkHistory> = {
@@ -60,6 +71,8 @@ export const workHistoryEntity: EntityDef<WorkHistory> = {
   fields: WORK_HISTORY_FIELDS,
   queries: createEntityQueries<WorkHistory>("/work-histories"),
   listColumns: ["workNumber", "workType", "workDate", "performerType"],
+  exportable: true,
+  dateRangeFilter: true,
 };
 
 export const vendorEntity: EntityDef<Vendor> = {
@@ -69,6 +82,7 @@ export const vendorEntity: EntityDef<Vendor> = {
   fields: VENDOR_FIELDS,
   queries: createEntityQueries<Vendor>("/vendors"),
   listColumns: ["vendorName", "vendorType", "contactInfo"],
+  exportable: true,
 };
 
 export const replantEntity: EntityDef<Replant> = {
@@ -78,6 +92,8 @@ export const replantEntity: EntityDef<Replant> = {
   fields: REPLANT_FIELDS,
   queries: createEntityQueries<Replant>("/replants"),
   listColumns: ["replantNumber", "replantDate", "background"],
+  exportable: true,
+  dateRangeFilter: true,
 };
 
 export const complaintEntity: EntityDef<Complaint> = {
@@ -87,6 +103,8 @@ export const complaintEntity: EntityDef<Complaint> = {
   fields: COMPLAINT_FIELDS,
   queries: createEntityQueries<Complaint>("/complaints"),
   listColumns: ["complaintNumber", "requestDate", "status", "routeNumber"],
+  exportable: true,
+  dateRangeFilter: true,
 };
 
 export const TREE_LINKED_ENTITIES = [diagnosisEntity, inspectionEntity, workHistoryEntity, complaintEntity];

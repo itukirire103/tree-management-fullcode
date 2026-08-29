@@ -7,7 +7,7 @@ import { z } from "zod";
 // 各スキーマに含めず.strict()で未知キーごと拒否する。
 // updateは同じ形状の全項目optional版(create.partial())とする。
 
-const uuid = () => z.uuid("有効なIDを指定してください。");
+const uuid = (message = "有効なIDを指定してください。") => z.uuid(message);
 const dateField = () => z.date({ error: "日付を指定してください。" });
 
 // フロントの<input type="number">はvalueを常に文字列として送る(toSubmitPayload参照)。
@@ -158,8 +158,10 @@ export const replantCreateSchema = z
     replantNumber: z.string().min(1, "植替え記録番号は必須です。"),
     replantDate: dateField(),
     background: z.string().optional().nullable(),
-    oldTreeId: uuid().optional().nullable(),
-    newTreeId: uuid().optional().nullable(),
+    // 要件定義書上は旧樹木ID・新樹木IDともに必須(○)。DBスキーマは既存データとの
+    // 互換性のためNULL許容のままにし、アプリケーション層(ここ)で必須を強制する。
+    oldTreeId: uuid("旧樹木は必須です。"),
+    newTreeId: uuid("新樹木は必須です。"),
   })
   .strict();
 export const replantUpdateSchema = replantCreateSchema.partial();

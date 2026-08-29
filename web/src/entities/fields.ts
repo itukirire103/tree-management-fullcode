@@ -136,8 +136,8 @@ export const VENDOR_FIELDS: FieldConfig[] = [
 export const REPLANT_FIELDS: FieldConfig[] = [
   { key: "replantNumber", label: "植替え番号", type: "text", required: true },
   { key: "replantDate", label: "植替え日", type: "date", required: true },
-  { key: "oldTreeId", label: "旧樹木", type: "treeSelect" },
-  { key: "newTreeId", label: "新樹木", type: "treeSelect" },
+  { key: "oldTreeId", label: "旧樹木", type: "treeSelect", required: true },
+  { key: "newTreeId", label: "新樹木", type: "treeSelect", required: true },
   { key: "background", label: "経緯", type: "textarea" },
 ];
 

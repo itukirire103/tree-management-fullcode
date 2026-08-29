@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router";
 import { useAuth } from "../auth/AuthContext";
 import { ROLE_LABELS } from "../lib/types";
+import { canViewVendors } from "../lib/permissions";
 
 const ADMIN_ROLES = new Set(["system_admin", "facility_admin"]);
 
@@ -16,7 +17,8 @@ export function AppLayout() {
             地図
           </NavLink>
           <NavLink to="/trees">樹木一覧</NavLink>
-          <NavLink to="/vendors">委託事業者</NavLink>
+          <NavLink to="/trees/stats">数量集計</NavLink>
+          {user && canViewVendors(user.role) && <NavLink to="/vendors">委託事業者</NavLink>}
           {user && ADMIN_ROLES.has(user.role) && <NavLink to="/areas">エリア割当て</NavLink>}
           {user && ADMIN_ROLES.has(user.role) && <NavLink to="/audit-logs">監査ログ</NavLink>}
         </nav>

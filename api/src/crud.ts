@@ -1,4 +1,5 @@
 import { Router } from "express";
+import type { Request } from "express";
 import type { ZodType } from "zod";
 import type { Entity } from "./auth/rbac.js";
 import { requireAuth } from "./auth/middleware.js";
@@ -6,6 +7,7 @@ import { checkPermissionAndGetFilter } from "./auth/scope.js";
 import { parsePagination, paginatedResponse } from "./pagination.js";
 import { NotFoundError } from "./errors.js";
 import { parseOrThrow } from "./validation/parse.js";
+import { sendCsv, sendExcel, type ExportColumn } from "./export.js";
 import { prisma } from "./db.js";
 
 // Prismaの各モデルデリゲート(prisma.tree, prisma.diagnosis等)はモデルごとに
@@ -39,6 +41,12 @@ type CrudRouterConfig = {
   // 混入(id/createdAt等)を弾く。全エンティティ共通で必須にし、指定漏れを防ぐ。
   createSchema: ZodType;
   updateSchema: ZodType;
+  // 機能要件#11/#25(台帳・作業予定簿のCSV/Excel出力)。指定したエンティティのみ
+  // GET /:entity/export?format=csv|xlsx を有効にする。ページングなしで全件対象。
+  exportColumns?: ExportColumn[];
+  // 機能要件#13(期間を指定して検索)。指定したPrismaフィールド名に対して
+  // ?dateFrom=YYYY-MM-DD&dateTo=YYYY-MM-DD で範囲検索できるようにする。
+  dateFilterField?: string;
 };
 
 /**
@@ -57,20 +65,37 @@ export function createCrudRouter(config: CrudRouterConfig): Router {
     onCreate,
     createSchema,
     updateSchema,
+    exportColumns,
+    dateFilterField,
   } = config;
   const router = Router();
   router.use(requireAuth);
 
-  router.get("/", async (req, res) => {
+  // 一覧(ページングあり)とエクスポート(全件)で同じ絞り込み条件を使うための共通処理。
+  async function buildWhere(req: Request) {
     const filter = await checkPermissionAndGetFilter(entity, "read", req.user!);
-    const { skip, take, page, pageSize } = parsePagination(req);
     const treeId = treeIdFilter ? (req.query.treeId as string | undefined) : undefined;
-
-    const where = {
+    const { dateFrom, dateTo } = req.query as Record<string, string | undefined>;
+    const dateRange =
+      dateFilterField && (dateFrom || dateTo)
+        ? {
+            [dateFilterField]: {
+              ...(dateFrom ? { gte: new Date(dateFrom) } : {}),
+              ...(dateTo ? { lte: new Date(`${dateTo}T23:59:59.999`) } : {}),
+            },
+          }
+        : {};
+    return {
       ...(softDelete ? { deletedAt: null } : {}),
       ...filter,
       ...(treeId ? { treeId } : {}),
+      ...dateRange,
     };
+  }
+
+  router.get("/", async (req, res) => {
+    const where = await buildWhere(req);
+    const { skip, take, page, pageSize } = parsePagination(req);
 
     const [data, total] = await Promise.all([
       delegate.findMany({ where, skip, take, orderBy }),
@@ -78,6 +103,21 @@ export function createCrudRouter(config: CrudRouterConfig): Router {
     ]);
     res.json(paginatedResponse(data, total, page, pageSize));
   });
+
+  // "/export"は"/:id"より前に定義する必要がある(Expressのルートマッチング順で
+  // "/:id"に"export"という文字列が食われてしまうため。tree.tsの"/map"と同じ理由)。
+  if (exportColumns) {
+    router.get("/export", async (req, res) => {
+      const where = await buildWhere(req);
+      const rows = await delegate.findMany({ where, orderBy });
+      const format = req.query.format === "xlsx" ? "xlsx" : "csv";
+      if (format === "xlsx") {
+        await sendExcel(res, entity, entity, exportColumns, rows);
+      } else {
+        sendCsv(res, entity, exportColumns, rows);
+      }
+    });
+  }
 
   router.get("/:id", async (req, res) => {
     const filter = await checkPermissionAndGetFilter(entity, "read", req.user!);

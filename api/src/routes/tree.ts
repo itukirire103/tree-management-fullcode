@@ -1,4 +1,5 @@
 import { Router } from "express";
+import type { Request } from "express";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { requireAuth } from "../auth/middleware.js";
@@ -7,6 +8,8 @@ import { parsePagination, paginatedResponse } from "../pagination.js";
 import { NotFoundError } from "../errors.js";
 import { parseOrThrow } from "../validation/parse.js";
 import { treeCreateSchema, treeUpdateSchema } from "../validation/schemas.js";
+import { sendCsv, sendExcel } from "../export.js";
+import { TREE_EXPORT_COLUMNS } from "../exportColumns.js";
 
 export const treeRouter = Router();
 treeRouter.use(requireAuth);
@@ -35,11 +38,10 @@ treeRouter.get("/map", async (req, res) => {
   res.json({ data: trees });
 });
 
-treeRouter.get("/", async (req, res) => {
+async function buildTreeListWhere(req: Request) {
   const filter = (await checkPermissionAndGetFilter("tree", "read", req.user!)) as
     | Prisma.TreeWhereInput
     | undefined;
-  const { skip, take, page, pageSize } = parsePagination(req);
   const { status, healthStatus, species, q } = req.query as Record<string, string>;
 
   const where: Prisma.TreeWhereInput = {
@@ -52,12 +54,96 @@ treeRouter.get("/", async (req, res) => {
     ...(species ? { species: { contains: species, mode: "insensitive" } } : {}),
     ...(q ? { treeNumber: { contains: q, mode: "insensitive" } } : {}),
   };
+  return where;
+}
+
+treeRouter.get("/", async (req, res) => {
+  const where = await buildTreeListWhere(req);
+  const { skip, take, page, pageSize } = parsePagination(req);
 
   const [data, total] = await Promise.all([
     prisma.tree.findMany({ where, skip, take, orderBy: { treeNumber: "asc" } }),
     prisma.tree.count({ where }),
   ]);
   res.json(paginatedResponse(data, total, page, pageSize));
+});
+
+// 機能要件#11(台帳のCSV/Excel出力)。一覧と同じ絞り込み条件をページングなしで対象にする。
+// "/:id"より前に定義する必要がある("/map"と同じ理由)。
+treeRouter.get("/export", async (req, res) => {
+  const where = await buildTreeListWhere(req);
+  const rows = await prisma.tree.findMany({ where, orderBy: { treeNumber: "asc" } });
+  const format = req.query.format === "xlsx" ? "xlsx" : "csv";
+  if (format === "xlsx") {
+    await sendExcel(res, "tree", "tree", TREE_EXPORT_COLUMNS, rows);
+  } else {
+    sendCsv(res, "tree", TREE_EXPORT_COLUMNS, rows);
+  }
+});
+
+// 機能要件#20: 指定期間の樹木数量(樹種毎の本数、植樹本数、伐採本数)を集計する。
+// "伐採日"という列は要件定義書上のTreeテーブルには存在しない(ステータス変更としてのみ
+// 記録される)ため、伐採本数は監査ログ(AuditLog)上でstatus→"removed"に変わった
+// UPDATE操作を期間集計することで代替する。"/:id"より前に定義する必要がある。
+treeRouter.get("/stats", async (req, res) => {
+  const filter = (await checkPermissionAndGetFilter("tree", "read", req.user!)) as
+    | Prisma.TreeWhereInput
+    | undefined;
+  const { dateFrom, dateTo } = req.query as Record<string, string | undefined>;
+  const dateRange =
+    dateFrom || dateTo
+      ? {
+          gte: dateFrom ? new Date(dateFrom) : undefined,
+          lte: dateTo ? new Date(`${dateTo}T23:59:59.999`) : undefined,
+        }
+      : undefined;
+
+  // 樹種別本数(現存する樹木のみ、期間の影響を受けないスナップショット)。
+  const bySpeciesRaw = await prisma.tree.groupBy({
+    by: ["species"],
+    where: { deletedAt: null, status: { not: "removed" }, ...filter },
+    _count: { _all: true },
+  });
+  const bySpecies = bySpeciesRaw
+    .map((r) => ({ species: r.species ?? "(未設定)", count: r._count._all }))
+    .sort((a, b) => b.count - a.count);
+
+  // 期間内の植樹本数(plantedDateが指定範囲内)。
+  const plantedBySpeciesRaw = await prisma.tree.groupBy({
+    by: ["species"],
+    where: {
+      deletedAt: null,
+      ...filter,
+      ...(dateRange ? { plantedDate: dateRange } : {}),
+    },
+    _count: { _all: true },
+  });
+  const plantedBySpecies = plantedBySpeciesRaw
+    .map((r) => ({ species: r.species ?? "(未設定)", count: r._count._all }))
+    .sort((a, b) => b.count - a.count);
+  const plantedCount = plantedBySpecies.reduce((sum, r) => sum + r.count, 0);
+
+  // 期間内の伐採本数。エリアスコープのユーザーには担当エリア内の樹木のみを対象にする
+  // (AuditLog自体はroute_number等のスコープ情報を持たないため、先にスコープ内の
+  // 樹木idを絞り込んでからAuditLogのrecordIdで突き合わせる)。
+  const auditWhere: Prisma.AuditLogWhereInput = {
+    tableName: "Tree",
+    action: "UPDATE",
+    ...(dateRange ? { changedAt: dateRange } : {}),
+  };
+  if (filter) {
+    const scopedIds = (await prisma.tree.findMany({ where: filter, select: { id: true } })).map(
+      (t) => t.id
+    );
+    auditWhere.recordId = { in: scopedIds };
+  }
+  const auditLogs = await prisma.auditLog.findMany({ where: auditWhere, select: { diff: true } });
+  const removedCount = auditLogs.filter((log) => {
+    const diff = log.diff as { after?: { status?: string } } | null;
+    return diff?.after?.status === "removed";
+  }).length;
+
+  res.json({ bySpecies, plantedCount, plantedBySpecies, removedCount });
 });
 
 treeRouter.get("/:id", async (req, res) => {

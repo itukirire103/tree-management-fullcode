@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import type { EntityDef } from "./config";
 import { toDateInputValue } from "./FieldInput";
+import { api } from "../lib/api";
 
 const PAGE_SIZE = 20;
 
@@ -20,8 +21,17 @@ export function EntityListPage<T extends { id: string }>({
   const treeId = searchParams.get("treeId") ?? undefined;
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [exporting, setExporting] = useState(false);
 
-  const { data, isLoading } = entity.queries.useList({ page, pageSize: PAGE_SIZE, treeId, q: q || undefined });
+  const { data, isLoading } = entity.queries.useList({
+    page,
+    pageSize: PAGE_SIZE,
+    treeId,
+    q: q || undefined,
+    ...(entity.dateRangeFilter ? { dateFrom: dateFrom || undefined, dateTo: dateTo || undefined } : {}),
+  });
   const deleteMutation = entity.queries.useDelete();
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
@@ -31,13 +41,54 @@ export function EntityListPage<T extends { id: string }>({
     await deleteMutation.mutateAsync(id);
   };
 
+  // CSV/Excel/PDF出力(機能要件#11/#25)。認証ヘッダが必要なためBlobで取得し、
+  // ブラウザのダウンロードとして保存させる。
+  const handleExport = async (format: "csv" | "xlsx" | "pdf") => {
+    setExporting(true);
+    try {
+      const path = format === "pdf" ? `${entity.path}/export/pdf` : `${entity.path}/export`;
+      const params: Record<string, string> = {};
+      if (format !== "pdf") params.format = format;
+      if (entity.dateRangeFilter) {
+        if (dateFrom) params.dateFrom = dateFrom;
+        if (dateTo) params.dateTo = dateTo;
+      }
+      const res = await api.get(path, { params, responseType: "blob" });
+      const url = URL.createObjectURL(res.data as Blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${entity.key}.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="entity-list-page">
       <div className="entity-list-header">
         <h1>{entity.label}一覧</h1>
-        <Link to={`new${newLinkSuffix}`} className="button-primary">
-          + 新規作成
-        </Link>
+        <div className="entity-list-header-actions">
+          {entity.exportable && (
+            <div className="export-buttons">
+              <button type="button" disabled={exporting} onClick={() => handleExport("csv")}>
+                CSV出力
+              </button>
+              <button type="button" disabled={exporting} onClick={() => handleExport("xlsx")}>
+                Excel出力
+              </button>
+              {entity.key === "workHistory" && (
+                <button type="button" disabled={exporting} onClick={() => handleExport("pdf")}>
+                  作業予定簿PDF
+                </button>
+              )}
+            </div>
+          )}
+          <Link to={`new${newLinkSuffix}`} className="button-primary">
+            + 新規作成
+          </Link>
+        </div>
       </div>
       {entity.path === "/trees" && (
         <input
@@ -50,6 +101,32 @@ export function EntityListPage<T extends { id: string }>({
             setPage(1);
           }}
         />
+      )}
+      {entity.dateRangeFilter && (
+        <div className="date-range-filter">
+          <label>
+            期間(開始)
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => {
+                setDateFrom(e.target.value);
+                setPage(1);
+              }}
+            />
+          </label>
+          <label>
+            期間(終了)
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => {
+                setDateTo(e.target.value);
+                setPage(1);
+              }}
+            />
+          </label>
+        </div>
       )}
       {isLoading ? (
         <div className="page-loading">読み込み中...</div>

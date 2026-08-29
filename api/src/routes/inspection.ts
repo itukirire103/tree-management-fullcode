@@ -9,6 +9,7 @@ import {
   inspectionPhotoCreateSchema,
   inspectionUpdateSchema,
 } from "../validation/schemas.js";
+import { INSPECTION_EXPORT_COLUMNS } from "../exportColumns.js";
 
 // 点検記録の「点検写真」は要件定義書上、番号プレート/全景/樹冠部/主要部/根元部の
 // 最大5枚(機能要件#15相当)。
@@ -21,6 +22,8 @@ export const inspectionRouter: Router = createCrudRouter({
   treeIdFilter: true,
   createSchema: inspectionCreateSchema,
   updateSchema: inspectionUpdateSchema,
+  exportColumns: INSPECTION_EXPORT_COLUMNS,
+  dateFilterField: "inspectionDate",
 });
 
 inspectionRouter.post("/:id/photos", requireAuth, async (req, res) => {

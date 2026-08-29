@@ -1,0 +1,9 @@
+ipag.ttf (IPAゴシック)
+
+このフォントは IPA Font License Agreement v1.0 の下で配布されている
+「IPAフォント」(IPAex/IPA Gothic)です。PDF出力(作業予定簿等)で
+日本語を正しく表示するため、実行環境のシステムフォントに依存させず
+本リポジトリに同梱しています。
+
+配布元・ライセンス全文:
+https://moji.or.jp/ipafont/license/
