@@ -76,6 +76,39 @@ describe("checkPermissionAndGetFilter", () => {
     expect(filter).toEqual({ tree: { is: { routeNumber: { in: ["R1"] } } } });
   });
 
+  it("workHistory+contractorはtree.routeNumberに加えて自社(vendorId)でも絞り込む(要件: 自社実施分のみ)", async () => {
+    findManyMock.mockResolvedValue([{ routeNumbers: ["R1"] }]);
+    const filter = await checkPermissionAndGetFilter(
+      "workHistory",
+      "read",
+      user({ role: "contractor", areaIds: ["area-1"], vendorId: "vendor-123" })
+    );
+    expect(filter).toEqual({
+      tree: { is: { routeNumber: { in: ["R1"] } } },
+      vendorId: "vendor-123",
+    });
+  });
+
+  it("workHistory+contractorでvendorId未設定のユーザーは何も見えない", async () => {
+    findManyMock.mockResolvedValue([{ routeNumbers: ["R1"] }]);
+    const filter = await checkPermissionAndGetFilter(
+      "workHistory",
+      "read",
+      user({ role: "contractor", areaIds: ["area-1"], vendorId: null })
+    );
+    expect(filter).toEqual({ id: { in: [] } });
+  });
+
+  it("workHistory+partner_adminはvendorId絞り込みなしで担当エリア全体が見える(要件通り)", async () => {
+    findManyMock.mockResolvedValue([{ routeNumbers: ["R1"] }]);
+    const filter = await checkPermissionAndGetFilter(
+      "workHistory",
+      "read",
+      user({ role: "partner_admin", areaIds: ["area-1"], vendorId: "vendor-123" })
+    );
+    expect(filter).toEqual({ tree: { is: { routeNumber: { in: ["R1"] } } } });
+  });
+
   it("scope=area かつ viaEitherTree(replant)はoldTree/newTreeどちらかがマッチすればよいOR条件を返す", async () => {
     findManyMock.mockResolvedValue([{ routeNumbers: ["R1"] }]);
     const filter = await checkPermissionAndGetFilter(

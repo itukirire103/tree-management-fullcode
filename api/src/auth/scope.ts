@@ -80,7 +80,17 @@ export async function checkPermissionAndGetFilter(
     return { [config.field]: { in: routeNumbers } };
   }
   if (config.kind === "viaTree") {
-    return { [config.treeField]: { is: { routeNumber: { in: routeNumbers } } } };
+    const filter: Record<string, unknown> = {
+      [config.treeField]: { is: { routeNumber: { in: routeNumbers } } },
+    };
+    // 街路樹管理委託事業者の作業履歴アクセスは要件上「自社実施分のみ」。
+    // 協定管理者(partner_admin)は同じviaTree設定でも担当エリア全体を見てよいため、
+    // contractorロールに限定してvendorIdでの絞り込みを追加する。
+    if (entity === "workHistory" && user.role === "contractor") {
+      if (!user.vendorId) return { id: { in: [] } };
+      filter.vendorId = user.vendorId;
+    }
+    return filter;
   }
   const [fieldA, fieldB] = config.treeFields;
   return {

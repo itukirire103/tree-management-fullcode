@@ -8,7 +8,16 @@ import {
   WORK_TYPE_LABELS,
 } from "../lib/types";
 
-export type FieldType = "text" | "textarea" | "number" | "date" | "select" | "checkbox" | "treeSelect" | "vendorSelect";
+export type FieldType =
+  | "text"
+  | "textarea"
+  | "number"
+  | "date"
+  | "select"
+  | "checkbox"
+  | "treeSelect"
+  | "vendorSelect"
+  | "file";
 
 export type FieldConfig = {
   key: string;
@@ -75,6 +84,7 @@ export const DIAGNOSIS_FIELDS: FieldConfig[] = [
   { key: "nextDiagnosisTiming", label: "次回診断時期", type: "text" },
   { key: "needsDetailedDiagnosis", label: "精密診断要否", type: "checkbox" },
   { key: "decayHollowRate", label: "腐朽・空洞化率(%)", type: "number", step: "0.1" },
+  { key: "reportFileId", label: "診断カルテ(PDF)", type: "file" },
 ];
 
 export const INSPECTION_FIELDS: FieldConfig[] = [

@@ -139,6 +139,8 @@ model File {
   uploadedByUser  User?            @relation(fields: [uploadedByUserId], references: [id])
   diagnosisReport Diagnosis?       @relation("DiagnosisReportFile")
   workHistoryPhotos WorkHistoryPhoto[]
+  diagnosisPhotos   DiagnosisPhoto[]
+  inspectionPhotos  InspectionPhoto[]
 
   @@map("files")
 }
@@ -234,8 +236,23 @@ model Diagnosis {
 
   tree       Tree  @relation(fields: [treeId], references: [id])
   reportFile File? @relation("DiagnosisReportFile", fields: [reportFileId], references: [id])
+  photos     DiagnosisPhoto[]
 
   @@map("diagnoses")
+}
+
+// 樹木診断結果の「被害部写真」(要件定義書上は複数枚添付)。
+// 作業前後写真(WorkHistoryPhoto)と同じ、File経由の中間テーブルパターン。
+model DiagnosisPhoto {
+  id          String @id @default(uuid())
+  diagnosisId String @map("diagnosis_id")
+  fileId      String @map("file_id")
+  sortOrder   Int    @default(0) @map("sort_order")
+
+  diagnosis Diagnosis @relation(fields: [diagnosisId], references: [id], onDelete: Cascade)
+  file      File      @relation(fields: [fileId], references: [id])
+
+  @@map("diagnosis_photos")
 }
 
 model Inspection {
@@ -265,8 +282,23 @@ model Inspection {
   updatedAt              DateTime @updatedAt @map("updated_at")
 
   tree Tree @relation(fields: [treeId], references: [id])
+  photos InspectionPhoto[]
 
   @@map("inspections")
+}
+
+// 点検記録の「点検写真」(要件定義書上は複数枚・最大5枚、番号プレート/全景/樹冠部/
+// 主要部/根元部)。5枚上限のチェックはAPI側(inspection.ts)で行う。
+model InspectionPhoto {
+  id           String @id @default(uuid())
+  inspectionId String @map("inspection_id")
+  fileId       String @map("file_id")
+  sortOrder    Int    @default(0) @map("sort_order")
+
+  inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  file       File       @relation(fields: [fileId], references: [id])
+
+  @@map("inspection_photos")
 }
 
 model Vendor {

@@ -1,6 +1,7 @@
 import type { FieldConfig } from "./fields";
 import { TreeSelect } from "./TreeSelect";
 import { VendorSelect } from "./VendorSelect";
+import { FileSelect } from "./FileSelect";
 
 export type FormValues = Record<string, string | boolean | null>;
 
@@ -105,6 +106,8 @@ export function FieldInput({
       return (
         <VendorSelect value={(value as string) || null} onChange={(v) => onChange(v)} required={field.required} />
       );
+    case "file":
+      return <FileSelect value={(value as string) || null} onChange={(v) => onChange(v)} required={field.required} />;
     case "text":
     default:
       return (

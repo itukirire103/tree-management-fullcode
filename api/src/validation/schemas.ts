@@ -142,6 +142,17 @@ export const workHistoryPhotoCreateSchema = z
   })
   .strict();
 
+const photoCreateSchema = z
+  .object({
+    fileId: uuid(),
+    sortOrder: z.preprocess(coerceNumberInput, z.number().int()).optional(),
+  })
+  .strict();
+// 樹木診断結果の「被害部写真」登録用。photoTypeを持たない点がworkHistoryPhotoと異なる。
+export const diagnosisPhotoCreateSchema = photoCreateSchema;
+// 点検記録の「点検写真」登録用。5枚上限のチェックはルート側(件数を数えてから判定)で行う。
+export const inspectionPhotoCreateSchema = photoCreateSchema;
+
 export const replantCreateSchema = z
   .object({
     replantNumber: z.string().min(1, "植替え記録番号は必須です。"),

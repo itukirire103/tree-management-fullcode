@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import type { EntityDef } from "./config";
 import { FieldInput, initialFormValues, toSubmitPayload, type FormValues } from "./FieldInput";
+import { PhotoManager } from "./PhotoManager";
 
 // 樹木詳細ページから「この樹木の診断を追加」のように遷移してきた場合、
 // treeId等をクエリパラメータで固定値として渡し、フォーム上には出さずに送信する。
@@ -88,6 +89,13 @@ export function EntityFormPage<T extends { id: string }>({
           </button>
         </div>
       </form>
+      {isEdit && id && entity.photoConfig && (
+        <PhotoManager
+          apiPath={`${entity.path}/${id}/photos`}
+          label={entity.photoConfig.label}
+          maxCount={entity.photoConfig.maxCount}
+        />
+      )}
     </div>
   );
 }

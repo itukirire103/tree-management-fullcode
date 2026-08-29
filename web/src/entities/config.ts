@@ -19,6 +19,9 @@ export type EntityDef<T extends { id: string }> = {
   queries: ReturnType<typeof createEntityQueries<T>>;
   // 一覧テーブルに表示する列(多すぎると見づらいため、代表的な項目のみに絞る)。
   listColumns: string[];
+  // 複数枚の写真添付(被害部写真・点検写真等)を持つエンティティのみ設定する。
+  // 編集画面(EntityFormPage)でレコードid確定後にのみ表示される。
+  photoConfig?: { label: string; maxCount?: number };
 };
 
 export const treeEntity: EntityDef<Tree> = {
@@ -37,6 +40,7 @@ export const diagnosisEntity: EntityDef<Diagnosis> = {
   fields: DIAGNOSIS_FIELDS,
   queries: createEntityQueries<Diagnosis>("/diagnoses"),
   listColumns: ["diagnosisNumber", "diagnosisDate", "overallJudgement", "arborist"],
+  photoConfig: { label: "被害部写真" },
 };
 
 export const inspectionEntity: EntityDef<Inspection> = {
@@ -46,6 +50,7 @@ export const inspectionEntity: EntityDef<Inspection> = {
   fields: INSPECTION_FIELDS,
   queries: createEntityQueries<Inspection>("/inspections"),
   listColumns: ["inspectionNumber", "inspectionDate", "inspector", "inspectionResult"],
+  photoConfig: { label: "点検写真", maxCount: 5 },
 };
 
 export const workHistoryEntity: EntityDef<WorkHistory> = {

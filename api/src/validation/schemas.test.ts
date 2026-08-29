@@ -3,6 +3,8 @@ import { ValidationError } from "../errors.js";
 import { parseOrThrow } from "./parse.js";
 import {
   complaintCreateSchema,
+  diagnosisPhotoCreateSchema,
+  inspectionPhotoCreateSchema,
   replantCreateSchema,
   treeCreateSchema,
   workHistoryCreateSchema,
@@ -135,6 +137,19 @@ describe("workHistoryCreateSchema", () => {
       performerType: "ward",
     });
     expect(result.success).toBe(true);
+  });
+});
+
+describe("diagnosisPhotoCreateSchema / inspectionPhotoCreateSchema", () => {
+  it("fileIdがUUID形式でないと失敗する", () => {
+    expect(diagnosisPhotoCreateSchema.safeParse({ fileId: "not-a-uuid" }).success).toBe(false);
+    expect(inspectionPhotoCreateSchema.safeParse({ fileId: "not-a-uuid" }).success).toBe(false);
+  });
+
+  it("正しいUUIDのfileIdなら成功する(sortOrder省略可)", () => {
+    const fileId = crypto.randomUUID();
+    expect(diagnosisPhotoCreateSchema.safeParse({ fileId }).success).toBe(true);
+    expect(inspectionPhotoCreateSchema.safeParse({ fileId, sortOrder: "2" }).success).toBe(true);
   });
 });
 

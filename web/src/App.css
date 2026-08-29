@@ -431,6 +431,70 @@ textarea {
   cursor: default !important;
 }
 
+/* ---- FileSelect / PhotoManager ---- */
+
+.file-select-current {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-select-download {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.file-select-clear {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.1em;
+  color: var(--color-text-muted);
+}
+
+.file-select-uploading {
+  color: var(--color-text-muted);
+  font-size: 0.9em;
+}
+
+.photo-manager {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.photo-manager-list {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.photo-manager-list button {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.photo-manager-empty {
+  color: var(--color-text-muted);
+}
+
+.photo-manager-max {
+  color: var(--color-text-muted);
+  font-size: 0.9em;
+}
+
 /* ---- 樹木詳細 ---- */
 
 .tree-species {
