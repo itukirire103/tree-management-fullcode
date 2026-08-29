@@ -1,7 +1,7 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { getAuditUserId } from "./context.js";
 
-// 監査対象は業務ドメインの7テーブル+添付ファイル。
+// 監査対象は業務ドメインの7テーブル+添付ファイル+権限マトリクス。
 // 認証・セッション関連(User/RefreshToken等)やarea/audit_log自体は対象外。
 const AUDITED_MODELS = new Set([
   "Tree",
@@ -12,6 +12,7 @@ const AUDITED_MODELS = new Set([
   "Replant",
   "Complaint",
   "File",
+  "RolePermission",
 ]);
 
 type AuditAction = "INSERT" | "UPDATE" | "DELETE";
@@ -56,6 +57,15 @@ export function createAuditExtension(auditWriter: PrismaClient) {
           const result = await query(args);
           if (AUDITED_MODELS.has(model)) {
             await writeAuditLog(auditWriter, model, extractId(result), "DELETE", { before: result });
+          }
+          return result;
+        },
+        // role-permissionsルートの権限マトリクス更新でupsertを使うために追加。
+        // 作成/更新どちらでも意味的には「値が変わった」ことに変わりないため、UPDATEとして記録する。
+        async upsert({ model, args, query }) {
+          const result = await query(args);
+          if (AUDITED_MODELS.has(model)) {
+            await writeAuditLog(auditWriter, model, extractId(result), "UPDATE", { after: result });
           }
           return result;
         },

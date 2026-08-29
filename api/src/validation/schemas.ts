@@ -180,3 +180,22 @@ export const complaintCreateSchema = z
   })
   .strict();
 export const complaintUpdateSchema = complaintCreateSchema.partial();
+
+// 機能要件#3: 権限マトリクス(role_permissions)の一括更新用。system_adminはコード側で
+// 固定のため許可ロールから除外する(送られてきても400で弾く)。
+export const rolePermissionUpdateSchema = z
+  .object({
+    changes: z
+      .array(
+        z
+          .object({
+            role: z.enum(["facility_admin", "ward_staff", "contractor", "partner_admin", "readonly_other"]),
+            entity: z.enum(["tree", "diagnosis", "inspection", "workHistory", "replant", "complaint", "vendor"]),
+            action: z.enum(["create", "read", "update", "delete"]),
+            scope: z.enum(["global", "area", "own", "none"]),
+          })
+          .strict()
+      )
+      .min(1, "変更内容がありません。"),
+  })
+  .strict();

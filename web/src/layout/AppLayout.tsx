@@ -21,6 +21,10 @@ export function AppLayout() {
           {user && canViewVendors(user.role) && <NavLink to="/vendors">委託事業者</NavLink>}
           {user && ADMIN_ROLES.has(user.role) && <NavLink to="/areas">エリア割当て</NavLink>}
           {user && ADMIN_ROLES.has(user.role) && <NavLink to="/audit-logs">監査ログ</NavLink>}
+          {/* 権限マトリクス編集はエリア割当て/監査ログより一段強い操作のためsystem_admin限定 */}
+          {user && user.role === "system_admin" && (
+            <NavLink to="/settings/role-permissions">権限マトリクス</NavLink>
+          )}
         </nav>
         <div className="app-user">
           {user && (

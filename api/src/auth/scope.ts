@@ -1,5 +1,5 @@
 import type { Entity, Scope } from "./rbac.js";
-import { getPermission } from "./rbac.js";
+import { getPermission } from "./permissionStore.js";
 import type { AuthenticatedUser } from "./middleware.js";
 import { prisma } from "../db.js";
 
@@ -50,7 +50,7 @@ export async function checkPermissionAndGetFilter(
   action: "create" | "read" | "update" | "delete",
   user: AuthenticatedUser
 ): Promise<ScopeFilter> {
-  const permission = getPermission(entity, user.role);
+  const permission = await getPermission(entity, user.role);
   const scope: Scope = permission[action];
 
   if (scope === "none") {

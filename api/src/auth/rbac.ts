@@ -2,6 +2,7 @@ import type { Role } from "@prisma/client";
 
 // アクセス範囲: 全体(組織全体) / エリア(担当エリアのみ) / 自分(自分のレコードのみ) / なし
 export type Scope = "global" | "area" | "own" | "none";
+export const SCOPES: Scope[] = ["global", "area", "own", "none"];
 
 export type Permission = {
   create: Scope;
@@ -9,6 +10,7 @@ export type Permission = {
   update: Scope;
   delete: Scope;
 };
+export const ACTIONS: (keyof Permission)[] = ["create", "read", "update", "delete"];
 
 // Dataverse版のセキュリティロール権限マトリクスをそのまま移植した設定。
 // エンティティ名 × ロール → 権限。system_adminは全テーブル全権限固定なのでここには含めない
@@ -22,9 +24,24 @@ export type Entity =
   | "complaint"
   | "vendor";
 
-const NONE: Permission = { create: "none", read: "none", update: "none", delete: "none" };
+export const ENTITIES: Entity[] = [
+  "tree",
+  "diagnosis",
+  "inspection",
+  "workHistory",
+  "replant",
+  "complaint",
+  "vendor",
+];
 
-export const PERMISSION_MATRIX: Record<Entity, Partial<Record<Role, Permission>>> = {
+export const NONE_PERMISSION: Permission = { create: "none", read: "none", update: "none", delete: "none" };
+
+// 機能要件#3(システム管理者はアカウント種類毎に利用権限を追加・変更できること)対応により、
+// 実行時に参照される権限マトリクスは api/src/auth/permissionStore.ts がDB(role_permissions
+// テーブル)から動的に構築する。この定数はそのDBの初期投入値(seed)と、
+// 「意図されたデフォルトはこうである」というテスト用の仕様値としてのみ使う
+// (checkPermissionAndGetFilterから直接参照されることはない)。
+export const DEFAULT_PERMISSION_MATRIX: Record<Entity, Partial<Record<Role, Permission>>> = {
   tree: {
     facility_admin: { create: "global", read: "global", update: "global", delete: "none" },
     ward_staff: { create: "global", read: "global", update: "global", delete: "none" },
@@ -80,9 +97,13 @@ export function isSystemAdmin(role: Role): boolean {
   return role === "system_admin";
 }
 
-export function getPermission(entity: Entity, role: Role): Permission {
+export const FULL_PERMISSION: Permission = { create: "global", read: "global", update: "global", delete: "global" };
+
+// デフォルト値(seed用・テスト用)を返す。実行時の認可判定には
+// permissionStore.tsのgetPermission(DB駆動)を使うこと。
+export function getDefaultPermission(entity: Entity, role: Role): Permission {
   if (isSystemAdmin(role)) {
-    return { create: "global", read: "global", update: "global", delete: "global" };
+    return FULL_PERMISSION;
   }
-  return PERMISSION_MATRIX[entity][role] ?? NONE;
+  return DEFAULT_PERMISSION_MATRIX[entity][role] ?? NONE_PERMISSION;
 }

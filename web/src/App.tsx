@@ -9,6 +9,7 @@ import { TreeDetailPage } from "./features/tree/TreeDetailPage";
 import { AreasPage } from "./features/areas/AreasPage";
 import { TreeStatsPage } from "./features/stats/TreeStatsPage";
 import { MfaSettingsPage } from "./features/settings/MfaSettingsPage";
+import { RolePermissionsPage } from "./features/settings/RolePermissionsPage";
 import { AuditLogPage } from "./features/audit/AuditLogPage";
 import { EntityListPage } from "./entities/EntityListPage";
 import { EntityFormPage } from "./entities/EntityFormPage";
@@ -98,6 +99,15 @@ function App() {
               />
 
               <Route path="/settings/mfa" element={<MfaSettingsPage />} />
+
+              <Route
+                path="/settings/role-permissions"
+                element={
+                  <ProtectedRoute roles={["system_admin"]}>
+                    <RolePermissionsPage />
+                  </ProtectedRoute>
+                }
+              />
 
               <Route
                 path="/audit-logs"

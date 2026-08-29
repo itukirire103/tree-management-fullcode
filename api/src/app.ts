@@ -14,6 +14,7 @@ import { fileRouter } from "./routes/file.js";
 import { areaRouter } from "./routes/area.js";
 import { userRouter } from "./routes/user.js";
 import { auditLogRouter } from "./routes/auditLog.js";
+import { rolePermissionsRouter } from "./routes/rolePermissions.js";
 import { ForbiddenError } from "./auth/scope.js";
 import { NotFoundError, ValidationError } from "./errors.js";
 import { prisma } from "./db.js";
@@ -76,6 +77,7 @@ export function createApp() {
   app.use("/api/areas", areaRouter);
   app.use("/api/users", userRouter);
   app.use("/api/audit-logs", auditLogRouter);
+  app.use("/api/role-permissions", rolePermissionsRouter);
 
   if (isProd) {
     app.use(express.static(WEB_DIST_DIR));

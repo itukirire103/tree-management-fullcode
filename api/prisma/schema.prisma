@@ -127,6 +127,29 @@ model AuditLog {
   @@map("audit_log")
 }
 
+enum PermissionScope {
+  global
+  area
+  own
+  none
+}
+
+// 機能要件#3(システム管理者はアカウント種類毎に利用権限を追加・変更できること)。
+// 権限マトリクス(api/src/auth/rbac.tsのDEFAULT_PERMISSION_MATRIX)をDB化し、
+// system_admin以外のロールについてはこのテーブルの内容がAPI経由で編集可能になる
+// (system_admin自身の全権限は誤操作でのロックアウトを避けるためコード固定のまま)。
+model RolePermission {
+  id        String          @id @default(uuid())
+  role      Role
+  entity    String
+  action    String
+  scope     PermissionScope
+  updatedAt DateTime        @updatedAt @map("updated_at")
+
+  @@unique([role, entity, action])
+  @@map("role_permissions")
+}
+
 model File {
   id               String   @id @default(uuid())
   storageKey       String   @map("storage_key")
