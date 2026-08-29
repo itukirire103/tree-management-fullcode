@@ -13,7 +13,9 @@
     "prisma:generate": "prisma generate",
     "prisma:seed": "tsx prisma/seed.ts",
     "backup": "tsx scripts/backup.ts",
-    "restore": "tsx scripts/restore.ts"
+    "restore": "tsx scripts/restore.ts",
+    "seed:scale": "tsx scripts/seed-scale.ts",
+    "load-test": "tsx scripts/load-test.ts"
   },
   "keywords": [],
   "author": "",
