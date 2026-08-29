@@ -1,184 +1,549 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
-
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+:root {
+  --color-bg: #f6f7f5;
+  --color-surface: #ffffff;
+  --color-border: #d9dee0;
+  --color-primary: #2f6f4f;
+  --color-primary-dark: #234f38;
+  --color-text: #1c2321;
+  --color-text-muted: #667169;
+  --color-danger: #c0392b;
+  font-family: "Hiragino Sans", "Yu Gothic UI", "Segoe UI", sans-serif;
+  color: var(--color-text);
 }
 
-.hero {
-  position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
+* {
+  box-sizing: border-box;
 }
 
-#center {
+body {
+  margin: 0;
+  background: var(--color-bg);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* ---- レイアウト ---- */
+
+.app-layout {
   display: flex;
   flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
+  height: 100vh;
 }
 
-#next-steps {
+.app-header {
   display: flex;
-  border-top: 1px solid var(--border);
+  align-items: center;
+  gap: 24px;
+  padding: 0 20px;
+  height: 56px;
+  background: var(--color-primary-dark);
+  color: white;
+  flex-shrink: 0;
+}
+
+.app-title {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.app-nav {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+}
+
+.app-nav a {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  padding: 6px 4px;
+  border-bottom: 2px solid transparent;
+}
+
+.app-nav a.active,
+.app-nav a:hover {
+  color: white;
+  border-bottom-color: white;
+}
+
+.app-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.app-user button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.app-main {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+}
+
+.page-loading,
+.page-error {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* ---- ログイン ---- */
+
+.login-page {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary-dark);
+}
+
+.login-form {
+  background: var(--color-surface);
+  padding: 32px;
+  border-radius: 8px;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-form h1 {
+  font-size: 1.2em;
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+.login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9em;
+}
+
+.login-form input {
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.login-form button {
+  margin-top: 8px;
+  padding: 10px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.form-error {
+  color: var(--color-danger);
+  font-size: 0.9em;
+}
+
+/* ---- 一覧/フォーム共通 ---- */
+
+.entity-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.button-primary,
+.button-secondary {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+}
+
+.button-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.button-secondary {
+  background: var(--color-border);
+  color: var(--color-text);
+  font-size: 0.85em;
+}
+
+.search-box {
+  display: block;
+  margin-bottom: 12px;
+  padding: 8px;
+  width: 280px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.entity-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+}
+
+.entity-table th,
+.entity-table td {
   text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.9em;
 }
 
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-#next-steps ul {
-  list-style: none;
-  padding: 0;
+.entity-row-actions {
   display: flex;
   gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
+  justify-content: flex-end;
 }
 
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
+.entity-row-actions button {
+  background: none;
+  border: none;
+  color: var(--color-danger);
+  cursor: pointer;
 }
 
-.ticks {
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 0.9em;
+}
+
+.entity-form-page form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 560px;
+  background: var(--color-surface);
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.entity-form-page label.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9em;
+}
+
+.field-checkbox {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px !important;
+}
+
+.entity-form-page input[type="text"],
+.entity-form-page input[type="number"],
+.entity-form-page input[type="date"],
+.entity-form-page select,
+.entity-form-page textarea {
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.required-mark {
+  color: var(--color-danger);
+  margin-left: 2px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.form-actions button[type="submit"] {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.form-actions button[type="button"] {
+  background: var(--color-border);
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* ---- TreeSelect ---- */
+
+.tree-select {
   position: relative;
+}
+
+.tree-select input {
   width: 100%;
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
+.tree-select-clear {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.1em;
+  color: var(--color-text-muted);
+}
 
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
-  }
+.tree-select-options {
+  position: absolute;
+  z-index: 20;
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 4px 0;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.tree-select-options li {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.tree-select-options li:hover {
+  background: var(--color-bg);
+}
+
+.tree-select-empty {
+  color: var(--color-text-muted);
+  cursor: default !important;
+}
+
+/* ---- 樹木詳細 ---- */
+
+.tree-species {
+  color: var(--color-text-muted);
+  font-weight: normal;
+}
+
+.tree-summary {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 6px 12px;
+  background: var(--color-surface);
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  max-width: 640px;
+}
+
+.tree-summary dt {
+  color: var(--color-text-muted);
+  font-size: 0.85em;
+}
+
+.tree-summary dd {
+  margin: 0;
+}
+
+.tree-linked-section {
+  margin-bottom: 28px;
+}
+
+.tree-linked-section h2 {
+  font-size: 1.05em;
+}
+
+.see-more-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.85em;
+}
+
+/* ---- エリア割当て ---- */
+
+.page-description {
+  color: var(--color-text-muted);
+  max-width: 640px;
+  margin-bottom: 20px;
+}
+
+.area-create-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.area-create-form input {
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.area-create-form button {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.area-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.area-card {
+  background: var(--color-surface);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.area-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.area-card-header button {
+  background: none;
+  border: none;
+  color: var(--color-danger);
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.area-routes {
+  color: var(--color-text-muted);
+  font-size: 0.85em;
+}
+
+.area-assignment-block {
+  margin-top: 12px;
+}
+
+.area-assignment-block h3 {
+  font-size: 0.9em;
+  margin-bottom: 4px;
+}
+
+.area-assignment-block ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 8px;
+  font-size: 0.85em;
+}
+
+.area-assignment-block li {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+}
+
+.area-assignment-block li button {
+  background: none;
+  border: none;
+  color: var(--color-danger);
+  cursor: pointer;
+}
+
+.empty-item {
+  color: var(--color-text-muted);
+}
+
+.area-assignment-block select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+/* ---- 地図 ---- */
+
+.map-page {
+  position: relative;
+  height: calc(100vh - 96px);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
+.tree-marker span {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.6);
+}
+
+.map-legend {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 1000;
+  background: white;
+  padding: 10px 14px;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  font-size: 0.85em;
+}
+
+.map-legend h3 {
+  margin: 0 0 6px;
+  font-size: 0.95em;
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.map-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.map-hint {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8em;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }

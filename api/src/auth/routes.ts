@@ -2,6 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { prisma } from "../db.js";
 import { signAccessToken, generateRefreshToken, hashToken } from "./jwt.js";
+import { requireAuth } from "./middleware.js";
 
 export const authRouter = Router();
 
@@ -79,6 +80,17 @@ authRouter.post("/refresh", async (req, res) => {
     expires: expiresAt,
   });
   res.json({ accessToken });
+});
+
+// リフレッシュ後のフロントエンドがユーザー情報(表示名・ロール)を
+// 再取得するためのエンドポイント。/refreshはaccessTokenのみ返すため。
+authRouter.get("/me", requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user!.id } });
+  if (!user) {
+    res.status(404).json({ error: "ユーザーが見つかりません。" });
+    return;
+  }
+  res.json({ id: user.id, email: user.email, displayName: user.displayName, role: user.role });
 });
 
 authRouter.post("/logout", async (req, res) => {
