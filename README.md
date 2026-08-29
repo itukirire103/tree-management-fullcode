@@ -47,6 +47,8 @@ npm install
 npm run dev               # http://localhost:5173
 ```
 
+本番デプロイ(Render + Cloudflare R2)の手順は [`DEPLOY.md`](DEPLOY.md) を参照。
+
 ## 現在の進捗
 
 - [x] Phase 0: プロジェクトスキャフォールド(api/web、TypeScript、Prisma初期化)
@@ -54,7 +56,8 @@ npm run dev               # http://localhost:5173
 - [x] Phase 2: 7エンティティのCRUD API + フロントエンドCRUD画面(FieldConfig駆動の汎用一覧/フォーム)、認証画面、樹木起点のサブグリッドUI(TreeDetailPage)、エリア割当て管理画面
 - [x] Phase 3: 地図機能(Leaflet)。bboxスコープAPI+クラスタリング、健全度による色分け、ホバー表示、クリックで詳細、ドラッグで位置修正、空き地クリックで新規登録。Playwrightでの実ブラウザ動作確認済み
 - [x] Phase 4: MFA(TOTP)・監査ログ閲覧UI・バックアップ/リストア実証・5,200件規模でのページング/性能検証・負荷テストまで完了
-- [ ] Phase 5: デプロイ(Render)・Cloudflare R2への実接続・ドキュメント整備
+- [x] Phase 5(準備): Renderデプロイ設定(`render.yaml`)・手順書(`DEPLOY.md`)を整備
+- [ ] Phase 5(残り): 実際のRenderデプロイ実行・Cloudflare R2への実接続(要各自のアカウント認証情報のため未実施)
 
 ## 仕様書要件との突き合わせで見つかった主な乖離と対応
 

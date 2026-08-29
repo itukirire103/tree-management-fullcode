@@ -1,0 +1,47 @@
+services:
+  - type: web
+    name: tree-management-fullcode
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: .
+    # web(SPA)をビルドしてapi/dist配信対象に含めてから、api自体をビルドする。
+    # api/src/app.tsは本番時にAPI+SPAを同一オリジンで配信する設計になっている。
+    buildCommand: >-
+      cd web && npm ci && npm run build &&
+      cd ../api && npm ci &&
+      npx prisma generate &&
+      npx prisma migrate deploy &&
+      npm run build
+    startCommand: cd api && npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Neon(プール接続)。実際の接続文字列はRenderダッシュボードで設定する。
+      - key: DATABASE_URL
+        sync: false
+      # Neon(直接接続)。prisma migrate deploy専用。
+      - key: DIRECT_DATABASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 30d
+      # ファイルストレージ(Cloudflare R2、S3互換API)。
+      - key: STORAGE_DRIVER
+        value: s3
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_REGION
+        value: auto
