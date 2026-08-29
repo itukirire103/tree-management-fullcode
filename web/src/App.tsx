@@ -7,6 +7,8 @@ import { AppLayout } from "./layout/AppLayout";
 import { MapPage } from "./features/map/MapPage";
 import { TreeDetailPage } from "./features/tree/TreeDetailPage";
 import { AreasPage } from "./features/areas/AreasPage";
+import { MfaSettingsPage } from "./features/settings/MfaSettingsPage";
+import { AuditLogPage } from "./features/audit/AuditLogPage";
 import { EntityListPage } from "./entities/EntityListPage";
 import { EntityFormPage } from "./entities/EntityFormPage";
 import {
@@ -89,6 +91,17 @@ function App() {
                 element={
                   <ProtectedRoute roles={["system_admin", "facility_admin"]}>
                     <AreasPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route path="/settings/mfa" element={<MfaSettingsPage />} />
+
+              <Route
+                path="/audit-logs"
+                element={
+                  <ProtectedRoute roles={["system_admin", "facility_admin"]}>
+                    <AuditLogPage />
                   </ProtectedRoute>
                 }
               />

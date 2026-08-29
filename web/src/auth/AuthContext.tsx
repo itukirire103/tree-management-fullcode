@@ -8,8 +8,9 @@ type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 type AuthContextValue = {
   user: AuthUser | null;
   status: AuthStatus;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, totpCode?: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -33,8 +34,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const res = await api.post<{ accessToken: string; user: AuthUser }>("/auth/login", { email, password });
+  const login = async (email: string, password: string, totpCode?: string) => {
+    // MFA必須ユーザーがtotpCode無しでログインすると401 {mfaRequired:true}が返る。
+    // ここでは握りつぶさずそのままthrowし、LoginPage側でaxiosエラーの中身を見て
+    // 「コード入力欄を出す」か「認証情報エラー」かを判定させる。
+    const res = await api.post<{ accessToken: string; user: AuthUser }>("/auth/login", {
+      email,
+      password,
+      totpCode,
+    });
     setAccessToken(res.data.accessToken);
     setUser(res.data.user);
     setStatus("authenticated");
@@ -47,7 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("unauthenticated");
   };
 
-  const value = useMemo(() => ({ user, status, login, logout }), [user, status]);
+  const refreshUser = async () => {
+    const res = await api.get<AuthUser>("/auth/me");
+    setUser(res.data);
+  };
+
+  const value = useMemo(() => ({ user, status, login, logout, refreshUser }), [user, status]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -18,6 +18,7 @@ export type AuthUser = {
   email: string;
   displayName: string;
   role: Role;
+  mfaEnabled: boolean;
 };
 
 export type Paginated<T> = {

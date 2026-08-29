@@ -87,6 +87,97 @@ textarea {
   cursor: pointer;
 }
 
+.mfa-nav-link {
+  color: white;
+  text-decoration: none;
+}
+
+.mfa-nav-link:hover {
+  text-decoration: underline;
+}
+
+/* ---- MFA設定 ---- */
+
+.mfa-card {
+  background: var(--color-surface);
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mfa-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9em;
+}
+
+.mfa-card input {
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.mfa-card button {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.mfa-secret code {
+  background: var(--color-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.form-success {
+  color: var(--color-primary);
+  font-size: 0.9em;
+}
+
+/* ---- 監査ログ ---- */
+
+.audit-log-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.audit-log-filters select {
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.audit-log-row {
+  cursor: pointer;
+}
+
+.audit-log-row:hover {
+  background: var(--color-bg);
+}
+
+.audit-log-record-id {
+  font-family: monospace;
+  font-size: 0.85em;
+}
+
+.audit-log-diff-row pre {
+  background: var(--color-bg);
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.8em;
+  margin: 0;
+}
+
 .app-main {
   flex: 1;
   overflow: auto;

@@ -18,13 +18,14 @@ export function AppLayout() {
           <NavLink to="/trees">樹木一覧</NavLink>
           <NavLink to="/vendors">委託事業者</NavLink>
           {user && ADMIN_ROLES.has(user.role) && <NavLink to="/areas">エリア割当て</NavLink>}
+          {user && ADMIN_ROLES.has(user.role) && <NavLink to="/audit-logs">監査ログ</NavLink>}
         </nav>
         <div className="app-user">
           {user && (
             <>
-              <span>
+              <NavLink to="/settings/mfa" className="mfa-nav-link">
                 {user.displayName}({ROLE_LABELS[user.role]})
-              </span>
+              </NavLink>
               <button type="button" onClick={() => logout()}>
                 ログアウト
               </button>

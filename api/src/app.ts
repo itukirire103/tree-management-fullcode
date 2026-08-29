@@ -13,6 +13,7 @@ import { complaintRouter } from "./routes/complaint.js";
 import { fileRouter } from "./routes/file.js";
 import { areaRouter } from "./routes/area.js";
 import { userRouter } from "./routes/user.js";
+import { auditLogRouter } from "./routes/auditLog.js";
 import { ForbiddenError } from "./auth/scope.js";
 import { NotFoundError, ValidationError } from "./errors.js";
 import { prisma } from "./db.js";
@@ -49,6 +50,14 @@ export function createApp() {
     })
   );
   app.use(cookieParser());
+  // express.json()はContent-Type: application/jsonが無いリクエスト(例: ボディなしの
+  // POST)ではreq.bodyを一切設定せずundefinedのままにする。各ルートが
+  // `const { x } = req.body as {...}` のように分割代入している箇所が軒並み
+  // クラッシュするため、ここでundefinedのときだけ空オブジェクトを補う。
+  app.use((req, _res, next) => {
+    if (req.body === undefined) req.body = {};
+    next();
+  });
 
   app.get("/health", async (_req, res) => {
     await prisma.$queryRaw`SELECT 1`;
@@ -66,6 +75,7 @@ export function createApp() {
   app.use("/api/files", fileRouter);
   app.use("/api/areas", areaRouter);
   app.use("/api/users", userRouter);
+  app.use("/api/audit-logs", auditLogRouter);
 
   if (isProd) {
     app.use(express.static(WEB_DIST_DIR));
