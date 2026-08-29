@@ -22,9 +22,9 @@ export function AppLayout() {
         <div className="app-user">
           {user && (
             <>
-              <span>
+              <NavLink to="/settings/mfa" className="mfa-nav-link">
                 {user.displayName}({ROLE_LABELS[user.role]})
-              </span>
+              </NavLink>
               <button type="button" onClick={() => logout()}>
                 ログアウト
               </button>

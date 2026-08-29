@@ -37,6 +37,10 @@ model User {
   isActive     Boolean  @default(true) @map("is_active")
   vendorId     String?  @map("vendor_id") // contractor/partner_adminロールが紐づくvendor(自分のみ閲覧用)
   totpSecret   String?  @map("totp_secret") // TOTP多要素認証(任意)
+  // totpSecretは設定(QRコード発行)時点で仮登録されるが、実際に正しいコードで
+  // 検証が済むまではログイン時のMFA必須化に使わない(誤ったQR読み取りで
+  // ロックアウトされるのを防ぐため、setup→verifyの2段階にしている)。
+  mfaEnabled   Boolean  @default(false) @map("mfa_enabled")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 

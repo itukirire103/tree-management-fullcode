@@ -49,6 +49,14 @@ export function createApp() {
     })
   );
   app.use(cookieParser());
+  // express.json()はContent-Type: application/jsonが無いリクエスト(例: ボディなしの
+  // POST)ではreq.bodyを一切設定せずundefinedのままにする。各ルートが
+  // `const { x } = req.body as {...}` のように分割代入している箇所が軒並み
+  // クラッシュするため、ここでundefinedのときだけ空オブジェクトを補う。
+  app.use((req, _res, next) => {
+    if (req.body === undefined) req.body = {};
+    next();
+  });
 
   app.get("/health", async (_req, res) => {
     await prisma.$queryRaw`SELECT 1`;

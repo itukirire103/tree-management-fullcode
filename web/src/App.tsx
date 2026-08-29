@@ -7,6 +7,7 @@ import { AppLayout } from "./layout/AppLayout";
 import { MapPage } from "./features/map/MapPage";
 import { TreeDetailPage } from "./features/tree/TreeDetailPage";
 import { AreasPage } from "./features/areas/AreasPage";
+import { MfaSettingsPage } from "./features/settings/MfaSettingsPage";
 import { EntityListPage } from "./entities/EntityListPage";
 import { EntityFormPage } from "./entities/EntityFormPage";
 import {
@@ -92,6 +93,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+              <Route path="/settings/mfa" element={<MfaSettingsPage />} />
             </Route>
           </Routes>
         </AuthProvider>
