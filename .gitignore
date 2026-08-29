@@ -4,5 +4,6 @@ build/
 .env
 !.env.example
 /api/storage/
+/backups/
 *.log
 .DS_Store
