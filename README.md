@@ -53,8 +53,30 @@ npm run dev               # http://localhost:5173
 - [x] Phase 1: 全ドメインスキーマ(7テーブル+認証/RBAC/監査/ファイル)をNeonへマイグレーション済み。JWT認証(ログイン/リフレッシュ/ログアウト/me)・RBAC権限マトリクス・エリア割当てAPI・監査ログ(Prisma拡張)・ファイルストレージ(ローカル/R2切り替え式)まで動作確認済み
 - [x] Phase 2: 7エンティティのCRUD API + フロントエンドCRUD画面(FieldConfig駆動の汎用一覧/フォーム)、認証画面、樹木起点のサブグリッドUI(TreeDetailPage)、エリア割当て管理画面
 - [x] Phase 3: 地図機能(Leaflet)。bboxスコープAPI+クラスタリング、健全度による色分け、ホバー表示、クリックで詳細、ドラッグで位置修正、空き地クリックで新規登録。Playwrightでの実ブラウザ動作確認済み
-- [ ] Phase 4: 非機能要件(MFA、監査ログ閲覧UI、バックアップ実証、負荷テスト、5,200件規模でのページング検証)
+- [ ] Phase 4(進行中): MFA(TOTP)・監査ログ閲覧UI・バックアップ/リストア実証は完了。残りは負荷テスト・5,200件規模でのページング検証
 - [ ] Phase 5: デプロイ(Render)・Cloudflare R2への実接続・ドキュメント整備
+
+---
+
+## バックアップ・リストア
+
+`api/scripts/backup.ts`(pg_dumpのラッパー)でカスタム形式(`-Fc`)のダンプを取得し、
+`api/scripts/restore.ts`(pg_restoreのラッパー)で復元する。マイグレーション同様、
+プール接続ではなく直接接続(`DIRECT_DATABASE_URL`)を使う。
+
+```bash
+cd api
+npm run backup                 # ./backups/tree-management-<timestamp>.dump を生成
+npm run restore -- <dumpファイル> <復元先接続文字列>
+```
+
+`npm run restore`の復元先は暗黙のフォールバックを持たせず、必ず引数で明示させる設計にした
+(本番/開発DBを誤って上書きする事故を防ぐため)。
+
+**実際にリストアまで検証済み**: Neon上に空のブランチ(`restore-test`)を作成し、
+スキーマを完全に削除した状態から`npm run backup`で取得したダンプを`npm run restore`で
+復元、ユーザー数・リフレッシュトークン数などの行数が復元前と一致することを確認した後、
+ブランチを削除して片付けた。「バックアップは取っているが復元したことがない」状態を避けるため。
 
 ---
 
