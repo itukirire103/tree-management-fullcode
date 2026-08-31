@@ -53,6 +53,9 @@ export function EntityListPage<T extends { id: string }>({
         if (dateFrom) params.dateFrom = dateFrom;
         if (dateTo) params.dateTo = dateTo;
       }
+      // 一覧の検索ボックス(樹木番号)による絞り込みも、出力時に無視されず
+      // 画面表示中の内容と一致するようにする。
+      if (entity.path === "/trees" && q) params.q = q;
       const res = await api.get(path, { params, responseType: "blob" });
       const url = URL.createObjectURL(res.data as Blob);
       const a = document.createElement("a");
