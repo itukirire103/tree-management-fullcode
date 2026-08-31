@@ -37,6 +37,9 @@ type CrudRouterConfig = {
   // 他テーブルへの副作用を伴う業務ロジック(Dataverse版でのPower Automate相当)を
   // トランザクション付きで差し込むための拡張点。
   onCreate?: (data: unknown) => Promise<unknown>;
+  // onCreateと同様、更新時にPower Automate相当の副作用を挟むための拡張点。
+  // 例: 樹木診断の総合判定を修正した場合、樹木マスタの健全度も追随させる。
+  onUpdate?: (id: string, data: unknown, existing: unknown) => Promise<unknown>;
   // POST/PATCHのreq.bodyを検証するzodスキーマ。型・必須項目・余計なフィールドの
   // 混入(id/createdAt等)を弾く。全エンティティ共通で必須にし、指定漏れを防ぐ。
   createSchema: ZodType;
@@ -63,6 +66,7 @@ export function createCrudRouter(config: CrudRouterConfig): Router {
     treeIdFilter = false,
     softDelete = true,
     onCreate,
+    onUpdate,
     createSchema,
     updateSchema,
     exportColumns,
@@ -140,7 +144,9 @@ export function createCrudRouter(config: CrudRouterConfig): Router {
     const existing = await delegate.findFirst({ where });
     if (!existing) throw new NotFoundError();
     const data = parseOrThrow(updateSchema, req.body);
-    const record = await delegate.update({ where: { id: req.params.id }, data });
+    const record = onUpdate
+      ? await onUpdate(req.params.id, data, existing)
+      : await delegate.update({ where: { id: req.params.id }, data });
     res.json(record);
   });
 

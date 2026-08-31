@@ -96,6 +96,17 @@ export function EntityFormPage<T extends { id: string }>({
           maxCount={entity.photoConfig.maxCount}
         />
       )}
+      {isEdit &&
+        id &&
+        entity.photoTypeGroups?.map((group) => (
+          <PhotoManager
+            key={group.value}
+            apiPath={`${entity.path}/${id}/photos`}
+            label={group.label}
+            extraFields={{ photoType: group.value }}
+            filterType={group.value}
+          />
+        ))}
     </div>
   );
 }

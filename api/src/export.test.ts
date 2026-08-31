@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Response } from "express";
-import { sendCsv } from "./export.js";
+import { sendCsv, sendExcel } from "./export.js";
+import ExcelJS from "exceljs";
 
 function mockResponse() {
   let body: unknown;
@@ -56,5 +57,49 @@ describe("sendCsv", () => {
       "Content-Disposition",
       'attachment; filename="tree.csv"'
     );
+  });
+});
+
+// Prismaの緯度経度・樹高等はDecimal型(decimal.jsのオブジェクト、toNumber()を持つ)で
+//返ってくる。exceljsにオブジェクトのまま渡すと「テキストとして格納された数値」に
+// なり、Excel上でSUM等の数式に使えず右寄せもされない不具合があったため、
+// セルへは必ずNumberへ変換してから渡していることを確認する回帰テスト。
+function fakeDecimal(n: number) {
+  return { toNumber: () => n };
+}
+
+function mockExpressResponse() {
+  const chunks: Buffer[] = [];
+  const res = {
+    setHeader: vi.fn(),
+    write: vi.fn((chunk: Buffer) => {
+      chunks.push(chunk);
+      return true;
+    }),
+    end: vi.fn(),
+  } as unknown as Response;
+  return { res, getBuffer: () => Buffer.concat(chunks) };
+}
+
+describe("sendExcel", () => {
+  it("Decimal(toNumber()を持つオブジェクト)を数値セルとして出力する", async () => {
+    const { res, getBuffer } = mockExpressResponse();
+    await sendExcel(res, "tree", "tree", [{ key: "latitude", header: "緯度" }], [
+      { latitude: fakeDecimal(35.658123) },
+    ]);
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(getBuffer() as unknown as ArrayBuffer);
+    const cell = wb.worksheets[0]!.getRow(2).getCell(1);
+    expect(cell.value).toBe(35.658123);
+    expect(typeof cell.value).toBe("number");
+  });
+
+  it("nullは空セルとして出力する", async () => {
+    const { res, getBuffer } = mockExpressResponse();
+    await sendExcel(res, "tree", "tree", [{ key: "notes", header: "備考" }], [{ notes: null }]);
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(getBuffer() as unknown as ArrayBuffer);
+    const cell = wb.worksheets[0]!.getRow(2).getCell(1);
+    expect(cell.value).toBeNull();
   });
 });

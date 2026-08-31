@@ -22,6 +22,9 @@ export type EntityDef<T extends { id: string }> = {
   // 複数枚の写真添付(被害部写真・点検写真等)を持つエンティティのみ設定する。
   // 編集画面(EntityFormPage)でレコードid確定後にのみ表示される。
   photoConfig?: { label: string; maxCount?: number };
+  // 作業前後写真(機能要件#9)のように、種別(photoType)ごとに分けて
+  // アップロード欄を出す必要があるエンティティのみ設定する。photoConfigとは併用しない。
+  photoTypeGroups?: { value: string; label: string }[];
   // CSV/Excel出力(機能要件#11)。バックエンドのGET {path}/export?format=csv|xlsxに対応する
   // エンティティのみtrueにする(全エンティティで有効)。
   exportable?: boolean;
@@ -71,6 +74,10 @@ export const workHistoryEntity: EntityDef<WorkHistory> = {
   fields: WORK_HISTORY_FIELDS,
   queries: createEntityQueries<WorkHistory>("/work-histories"),
   listColumns: ["workNumber", "workType", "workDate", "performerType"],
+  photoTypeGroups: [
+    { value: "before", label: "作業前写真" },
+    { value: "after", label: "作業後写真" },
+  ],
   exportable: true,
   dateRangeFilter: true,
 };

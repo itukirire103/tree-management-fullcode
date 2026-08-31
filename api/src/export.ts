@@ -9,9 +9,24 @@ const JP_FONT_PATH = path.resolve(__dirname, "../assets/fonts/ipag.ttf");
 
 export type ExportColumn = { key: string; header: string };
 
+// PrismaのDecimal型(decimal.js)はプレーンなオブジェクトのため、CSVへ渡すと
+// String(value)自体は数値文字列になり問題ないが、Excel(exceljs)のセルへ
+// そのまま渡すと「数値ではなくテキストとして格納された数値」になってしまう
+// (SUM等の数式に使えない、右寄せされない)。@prisma/clientを直接importせず
+// toNumber()を持つかどうかで判定する(ここはエンティティ非依存の汎用モジュールのため)。
+function normalizeCellValue(value: unknown): unknown {
+  if (value === null || value === undefined) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === "object" && typeof (value as { toNumber?: unknown }).toNumber === "function") {
+    return (value as { toNumber: () => number }).toNumber();
+  }
+  return value;
+}
+
 function toCsvValue(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  const s = value instanceof Date ? value.toISOString() : String(value);
+  const normalized = normalizeCellValue(value);
+  if (normalized === null || normalized === undefined) return "";
+  const s = normalized instanceof Date ? normalized.toISOString() : String(normalized);
   if (/["\n,]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 }
@@ -47,7 +62,9 @@ export async function sendExcel(
   sheet.columns = columns.map((c) => ({ header: c.header, key: c.key, width: 18 }));
   sheet.getRow(1).font = { bold: true };
   for (const row of rows) {
-    sheet.addRow(row);
+    const normalized: Record<string, unknown> = {};
+    for (const c of columns) normalized[c.key] = normalizeCellValue(row[c.key]);
+    sheet.addRow(normalized);
   }
   res.setHeader(
     "Content-Type",

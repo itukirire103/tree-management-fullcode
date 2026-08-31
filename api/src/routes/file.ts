@@ -2,6 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { requireAuth } from "../auth/middleware.js";
 import { fileStorage } from "../storage/index.js";
@@ -75,7 +76,27 @@ fileRouter.delete("/:id", async (req, res) => {
   const isOwner = file.uploadedByUserId === req.user!.id;
   const isAdmin = req.user!.role === "system_admin" || req.user!.role === "facility_admin";
   if (!isOwner && !isAdmin) throw new ForbiddenError();
+
+  // 必ずDBの行を先に削除する。ストレージを先に消してしまうと、診断カルテ・
+  // 作業前後写真等からまだ参照されているファイルの場合にPostgresのRESTRICT制約で
+  // 行削除だけが失敗し、「DB上は存在するがストレージの実体は無い」壊れた参照が
+  // 残ってしまう(実際に発生を確認した不具合)。
+  try {
+    await prisma.file.delete({ where: { id: file.id } });
+  } catch (e) {
+    // schema.prismaの外部キーはonDelete指定なし(既定のRESTRICT)のため、Prismaが
+    // 独自に検知するP2003(PrismaClientKnownRequestError)ではなく、Postgres側が
+    // RESTRICT違反を返した生のエラー(PrismaClientUnknownRequestError)になる。
+    // 構造化されたcodeを持たないため、メッセージの文字列一致で判定する。
+    const isForeignKeyRestrictError =
+      e instanceof Prisma.PrismaClientUnknownRequestError && e.message.includes("foreign key constraint");
+    if (isForeignKeyRestrictError) {
+      throw new ValidationError(
+        "このファイルは診断・点検・作業履歴等から参照されているため削除できません。先に紐づけを解除してください。"
+      );
+    }
+    throw e;
+  }
   await fileStorage.delete(file.storageKey);
-  await prisma.file.delete({ where: { id: file.id } });
   res.status(204).send();
 });

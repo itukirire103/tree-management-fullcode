@@ -181,6 +181,15 @@ export const complaintCreateSchema = z
   .strict();
 export const complaintUpdateSchema = complaintCreateSchema.partial();
 
+// エリア(担当エリア=路線番号の集合)の登録・変更。
+export const areaCreateSchema = z
+  .object({
+    name: z.string().min(1, "エリア名は必須です。"),
+    routeNumbers: z.array(z.string().min(1)).default([]),
+  })
+  .strict();
+export const areaUpdateSchema = areaCreateSchema.partial();
+
 // 機能要件#2: アカウントの登録・変更・停止。system_adminは権限マトリクス編集と
 // 同様にコード側で固定の扱いのため、この画面からは新規付与できない(役割の選択肢から除外)。
 const ASSIGNABLE_ROLE = z.enum(["facility_admin", "ward_staff", "contractor", "partner_admin", "readonly_other"]);

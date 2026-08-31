@@ -2,6 +2,8 @@ import { Router } from "express";
 import { prisma } from "../db.js";
 import { requireAuth, requireRole } from "../auth/middleware.js";
 import { NotFoundError, ValidationError } from "../errors.js";
+import { parseOrThrow } from "../validation/parse.js";
+import { areaCreateSchema, areaUpdateSchema } from "../validation/schemas.js";
 
 // エリア割当て(Dataverse版のBusiness Unit階層に相当)の管理エンドポイント。
 // エリアの新設・RouteNumber構成の変更、および担当職員(User)/委託事業者(Vendor)の
@@ -27,11 +29,8 @@ areaRouter.get("/:id", async (req, res) => {
 });
 
 areaRouter.post("/", requireRole("system_admin", "facility_admin"), async (req, res) => {
-  const { name, routeNumbers } = req.body as { name?: string; routeNumbers?: string[] };
-  if (!name || !Array.isArray(routeNumbers)) {
-    throw new ValidationError("name(文字列)とrouteNumbers(配列)は必須です。");
-  }
-  const area = await prisma.area.create({ data: { name, routeNumbers } });
+  const data = parseOrThrow(areaCreateSchema, req.body);
+  const area = await prisma.area.create({ data });
   res.status(201).json(area);
 });
 
@@ -39,11 +38,8 @@ areaRouter.patch("/:id", requireRole("system_admin", "facility_admin"), async (r
   const id = String(req.params.id);
   const existing = await prisma.area.findUnique({ where: { id } });
   if (!existing) throw new NotFoundError();
-  const { name, routeNumbers } = req.body as { name?: string; routeNumbers?: string[] };
-  const area = await prisma.area.update({
-    where: { id },
-    data: { ...(name ? { name } : {}), ...(routeNumbers ? { routeNumbers } : {}) },
-  });
+  const data = parseOrThrow(areaUpdateSchema, req.body);
+  const area = await prisma.area.update({ where: { id }, data });
   res.json(area);
 });
 

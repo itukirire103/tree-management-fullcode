@@ -126,21 +126,36 @@ treeRouter.get("/stats", async (req, res) => {
   // 期間内の伐採本数。エリアスコープのユーザーには担当エリア内の樹木のみを対象にする
   // (AuditLog自体はroute_number等のスコープ情報を持たないため、先にスコープ内の
   // 樹木idを絞り込んでからAuditLogのrecordIdで突き合わせる)。
-  const auditWhere: Prisma.AuditLogWhereInput = {
-    tableName: "Tree",
-    action: "UPDATE",
-    ...(dateRange ? { changedAt: dateRange } : {}),
-  };
+  //
+  // 監査ログのUPDATE 1行はその時点の行全体のスナップショット(after)であり、
+  // 「このUPDATEでstatusが伐採済に変わった」ことまでは表さない。そのため単純に
+  // diff.after.status === "removed" な行数を数えると、伐採後に備考等の別項目を
+  // 編集しただけの行まで「伐採」として二重・多重カウントしてしまう。
+  // 正しくは樹木ごとに「最初にstatusが伐採済になった時刻」を求め、その時刻が
+  // 指定期間内かどうかで1本として数える必要がある。
+  const auditWhere: Prisma.AuditLogWhereInput = { tableName: "Tree", action: "UPDATE" };
   if (filter) {
     const scopedIds = (await prisma.tree.findMany({ where: filter, select: { id: true } })).map(
       (t) => t.id
     );
     auditWhere.recordId = { in: scopedIds };
   }
-  const auditLogs = await prisma.auditLog.findMany({ where: auditWhere, select: { diff: true } });
-  const removedCount = auditLogs.filter((log) => {
+  const allUpdateLogs = await prisma.auditLog.findMany({
+    where: auditWhere,
+    select: { recordId: true, changedAt: true, diff: true },
+    orderBy: { changedAt: "asc" },
+  });
+  const firstRemovedAt = new Map<string, Date>();
+  for (const log of allUpdateLogs) {
     const diff = log.diff as { after?: { status?: string } } | null;
-    return diff?.after?.status === "removed";
+    if (diff?.after?.status === "removed" && !firstRemovedAt.has(log.recordId)) {
+      firstRemovedAt.set(log.recordId, log.changedAt);
+    }
+  }
+  const removedCount = Array.from(firstRemovedAt.values()).filter((changedAt) => {
+    if (dateRange?.gte && changedAt < dateRange.gte) return false;
+    if (dateRange?.lte && changedAt > dateRange.lte) return false;
+    return true;
   }).length;
 
   res.json({ bySpecies, plantedCount, plantedBySpecies, removedCount });

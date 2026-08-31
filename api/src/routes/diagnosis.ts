@@ -43,6 +43,23 @@ export const diagnosisRouter: Router = createCrudRouter({
       return diagnosis;
     });
   },
+  // 作成時と同じ理由で、既存の診断記録の総合判定を修正した場合も樹木マスタの
+  // 健全度へ反映する(修正しないと、誤入力を後から直しても樹木側は古い値のまま残る)。
+  onUpdate: async (id, data, existingRaw) => {
+    const input = data as Prisma.DiagnosisUncheckedUpdateInput;
+    const existing = existingRaw as { treeId: string };
+    return prisma.$transaction(async (tx) => {
+      const diagnosis = await tx.diagnosis.update({ where: { id }, data: input });
+      const judgement = diagnosis.overallJudgement;
+      if (judgement && VALID_HEALTH_STATUS.has(judgement)) {
+        await tx.tree.update({
+          where: { id: diagnosis.treeId ?? existing.treeId },
+          data: { healthStatus: judgement as "A" | "B1" | "B2" | "C" },
+        });
+      }
+      return diagnosis;
+    });
+  },
 });
 
 // 樹木診断結果の「被害部写真」(機能要件#15、複数枚)。ファイルは事前に
