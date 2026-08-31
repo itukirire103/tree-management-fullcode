@@ -9,6 +9,7 @@
   --color-danger: #c0392b;
   font-family: "Hiragino Sans", "Yu Gothic UI", "Segoe UI", sans-serif;
   color: var(--color-text);
+  color-scheme: light;
 }
 
 * {
@@ -25,6 +26,8 @@ input,
 select,
 textarea {
   font: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
 }
 
 /* ---- レイアウト ---- */
