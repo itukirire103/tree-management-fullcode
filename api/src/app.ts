@@ -10,6 +10,8 @@ import { workHistoryRouter } from "./routes/workHistory.js";
 import { vendorRouter } from "./routes/vendor.js";
 import { replantRouter } from "./routes/replant.js";
 import { complaintRouter } from "./routes/complaint.js";
+import { scheduleRouter } from "./routes/schedule.js";
+import { calendarRouter } from "./routes/calendar.js";
 import { fileRouter } from "./routes/file.js";
 import { areaRouter } from "./routes/area.js";
 import { userRouter } from "./routes/user.js";
@@ -73,6 +75,8 @@ export function createApp() {
   app.use("/api/vendors", vendorRouter);
   app.use("/api/replants", replantRouter);
   app.use("/api/complaints", complaintRouter);
+  app.use("/api/schedules", scheduleRouter);
+  app.use("/api/calendar", calendarRouter);
   app.use("/api/files", fileRouter);
   app.use("/api/areas", areaRouter);
   app.use("/api/users", userRouter);

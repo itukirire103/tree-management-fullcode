@@ -24,6 +24,9 @@ export function EntityListPage<T extends { id: string }>({
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [exporting, setExporting] = useState(false);
+  // 機能要件#19: 台帳の各項目ごとの絞込検索。entity.filterableFieldsに列挙されたキーのみ、
+  // フィールド種別(select/checkbox/text)に応じた入力欄を出し分ける。
+  const [fieldFilters, setFieldFilters] = useState<Record<string, string>>({});
 
   const { data, isLoading } = entity.queries.useList({
     page,
@@ -31,6 +34,7 @@ export function EntityListPage<T extends { id: string }>({
     treeId,
     q: q || undefined,
     ...(entity.dateRangeFilter ? { dateFrom: dateFrom || undefined, dateTo: dateTo || undefined } : {}),
+    ...fieldFilters,
   });
   const deleteMutation = entity.queries.useDelete();
 
@@ -56,6 +60,7 @@ export function EntityListPage<T extends { id: string }>({
       // 一覧の検索ボックス(樹木番号)による絞り込みも、出力時に無視されず
       // 画面表示中の内容と一致するようにする。
       if (entity.path === "/trees" && q) params.q = q;
+      Object.assign(params, fieldFilters);
       const res = await api.get(path, { params, responseType: "blob" });
       const url = URL.createObjectURL(res.data as Blob);
       const a = document.createElement("a");
@@ -129,6 +134,57 @@ export function EntityListPage<T extends { id: string }>({
               }}
             />
           </label>
+        </div>
+      )}
+      {entity.filterableFields && entity.filterableFields.length > 0 && (
+        <div className="field-filters">
+          {entity.filterableFields.map((key) => {
+            const field = entity.fields.find((f) => f.key === key);
+            if (!field) return null;
+            const value = fieldFilters[key] ?? "";
+            const update = (v: string) => {
+              setFieldFilters((prev) => {
+                const next = { ...prev };
+                if (v) next[key] = v;
+                else delete next[key];
+                return next;
+              });
+              setPage(1);
+            };
+            if (field.type === "select") {
+              return (
+                <label key={key} className="field-filter">
+                  {field.label}
+                  <select value={value} onChange={(e) => update(e.target.value)}>
+                    <option value="">すべて</option>
+                    {field.options?.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              );
+            }
+            if (field.type === "checkbox") {
+              return (
+                <label key={key} className="field-filter">
+                  {field.label}
+                  <select value={value} onChange={(e) => update(e.target.value)}>
+                    <option value="">すべて</option>
+                    <option value="true">はい</option>
+                    <option value="false">いいえ</option>
+                  </select>
+                </label>
+              );
+            }
+            return (
+              <label key={key} className="field-filter">
+                {field.label}
+                <input type="text" value={value} onChange={(e) => update(e.target.value)} placeholder="絞り込み..." />
+              </label>
+            );
+          })}
         </div>
       )}
       {isLoading ? (

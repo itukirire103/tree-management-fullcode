@@ -11,6 +11,10 @@ export const replantRouter = createCrudRouter({
   updateSchema: replantUpdateSchema,
   exportColumns: REPLANT_EXPORT_COLUMNS,
   dateFilterField: "replantDate",
+  filterFields: [
+    { key: "replantNumber", mode: "text" },
+    { key: "background", mode: "text" },
+  ],
   // 業務ロジック(Dataverse版ではPower Automateで実装): 植替え履歴が登録されると
   // 旧樹木のステータスを「植替え済」に自動更新する。
   onCreate: async (data) => {

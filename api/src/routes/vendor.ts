@@ -9,4 +9,9 @@ export const vendorRouter = createCrudRouter({
   createSchema: vendorCreateSchema,
   updateSchema: vendorUpdateSchema,
   exportColumns: VENDOR_EXPORT_COLUMNS,
+  filterFields: [
+    { key: "vendorName", mode: "text" },
+    { key: "vendorType", mode: "text" },
+    { key: "contactInfo", mode: "text" },
+  ],
 });

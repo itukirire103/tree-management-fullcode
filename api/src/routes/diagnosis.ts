@@ -25,6 +25,11 @@ export const diagnosisRouter: Router = createCrudRouter({
   updateSchema: diagnosisUpdateSchema,
   exportColumns: DIAGNOSIS_EXPORT_COLUMNS,
   dateFilterField: "diagnosisDate",
+  filterFields: [
+    { key: "diagnosisNumber", mode: "text" },
+    { key: "overallJudgement", mode: "select" },
+    { key: "arborist", mode: "text" },
+  ],
   // 業務ロジック(Dataverse版ではPower Automateで実装): 樹木診断結果が登録されると
   // 樹木マスタの健全度を自動更新する。
   onCreate: async (data) => {

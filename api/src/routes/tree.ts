@@ -42,7 +42,7 @@ async function buildTreeListWhere(req: Request) {
   const filter = (await checkPermissionAndGetFilter("tree", "read", req.user!)) as
     | Prisma.TreeWhereInput
     | undefined;
-  const { status, healthStatus, species, q } = req.query as Record<string, string>;
+  const { status, healthStatus, species, address, q } = req.query as Record<string, string>;
 
   const where: Prisma.TreeWhereInput = {
     deletedAt: null,
@@ -52,6 +52,7 @@ async function buildTreeListWhere(req: Request) {
       ? { healthStatus: healthStatus as Prisma.EnumHealthStatusNullableFilter }
       : {}),
     ...(species ? { species: { contains: species, mode: "insensitive" } } : {}),
+    ...(address ? { address: { contains: address, mode: "insensitive" } } : {}),
     ...(q ? { treeNumber: { contains: q, mode: "insensitive" } } : {}),
   };
   return where;

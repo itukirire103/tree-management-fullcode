@@ -24,6 +24,11 @@ export const inspectionRouter: Router = createCrudRouter({
   updateSchema: inspectionUpdateSchema,
   exportColumns: INSPECTION_EXPORT_COLUMNS,
   dateFilterField: "inspectionDate",
+  filterFields: [
+    { key: "inspectionNumber", mode: "text" },
+    { key: "inspector", mode: "text" },
+    { key: "inspectionResult", mode: "text" },
+  ],
 });
 
 inspectionRouter.post("/:id/photos", requireAuth, async (req, res) => {

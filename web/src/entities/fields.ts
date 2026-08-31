@@ -3,6 +3,8 @@ import {
   HEALTH_STATUS_LABELS,
   LEAF_TYPE_LABELS,
   PERFORMER_TYPE_LABELS,
+  SCHEDULE_STATUS_LABELS,
+  SCHEDULE_TYPE_LABELS,
   SIZE_CLASS_LABELS,
   TREE_STATUS_LABELS,
   WORK_TYPE_LABELS,
@@ -124,6 +126,31 @@ export const WORK_HISTORY_FIELDS: FieldConfig[] = [
   },
   { key: "vendorId", label: "委託事業者", type: "vendorSelect" },
   { key: "workNotes", label: "作業内容メモ", type: "textarea" },
+];
+
+export const SCHEDULE_FIELDS: FieldConfig[] = [
+  { key: "scheduleNumber", label: "予定番号", type: "text", required: true },
+  {
+    key: "scheduleType",
+    label: "予定種別",
+    type: "select",
+    options: selectOptions(SCHEDULE_TYPE_LABELS),
+    required: true,
+    defaultValue: "work",
+  },
+  { key: "treeId", label: "対象樹木", type: "treeSelect", required: true },
+  { key: "plannedDate", label: "予定日", type: "date", required: true },
+  { key: "workType", label: "作業種別(作業予定のみ)", type: "select", options: selectOptions(WORK_TYPE_LABELS) },
+  {
+    key: "status",
+    label: "進捗状況",
+    type: "select",
+    options: selectOptions(SCHEDULE_STATUS_LABELS),
+    required: true,
+    defaultValue: "planned",
+  },
+  { key: "vendorId", label: "委託事業者", type: "vendorSelect" },
+  { key: "memo", label: "メモ", type: "textarea" },
 ];
 
 export const VENDOR_FIELDS: FieldConfig[] = [

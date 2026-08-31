@@ -74,6 +74,17 @@ export const WORK_HISTORY_EXPORT_COLUMNS: ExportColumn[] = [
   { key: "workNotes", header: "作業内容メモ" },
 ];
 
+export const SCHEDULE_EXPORT_COLUMNS: ExportColumn[] = [
+  { key: "scheduleNumber", header: "予定番号" },
+  { key: "scheduleType", header: "予定種別" },
+  { key: "treeId", header: "対象樹木ID" },
+  { key: "plannedDate", header: "予定日" },
+  { key: "workType", header: "作業種別" },
+  { key: "status", header: "進捗状況" },
+  { key: "vendorId", header: "委託事業者ID" },
+  { key: "memo", header: "メモ" },
+];
+
 export const VENDOR_EXPORT_COLUMNS: ExportColumn[] = [
   { key: "vendorName", header: "事業者名" },
   { key: "vendorType", header: "種別" },

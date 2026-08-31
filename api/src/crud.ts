@@ -50,6 +50,11 @@ type CrudRouterConfig = {
   // 機能要件#13(期間を指定して検索)。指定したPrismaフィールド名に対して
   // ?dateFrom=YYYY-MM-DD&dateTo=YYYY-MM-DD で範囲検索できるようにする。
   dateFilterField?: string;
+  // 機能要件#19(台帳の各項目ごとに絞込検索ができること)。列挙したフィールドのみ
+  // ?<key>=<value> による絞り込みを許可する(未列挙のフィールド名はクエリに
+  // 含まれていても無視する。任意のカラムを外部から指定させないためのホワイトリスト)。
+  // text: 部分一致(大文字小文字区別なし) / select: 完全一致(enum) / checkbox: 真偽値。
+  filterFields?: { key: string; mode: "text" | "select" | "checkbox" }[];
 };
 
 /**
@@ -71,6 +76,7 @@ export function createCrudRouter(config: CrudRouterConfig): Router {
     updateSchema,
     exportColumns,
     dateFilterField,
+    filterFields,
   } = config;
   const router = Router();
   router.use(requireAuth);
@@ -89,11 +95,20 @@ export function createCrudRouter(config: CrudRouterConfig): Router {
             },
           }
         : {};
+    const fieldFilters: Record<string, unknown> = {};
+    for (const f of filterFields ?? []) {
+      const raw = req.query[f.key];
+      if (typeof raw !== "string" || raw === "") continue;
+      if (f.mode === "text") fieldFilters[f.key] = { contains: raw, mode: "insensitive" };
+      else if (f.mode === "checkbox") fieldFilters[f.key] = raw === "true";
+      else fieldFilters[f.key] = raw;
+    }
     return {
       ...(softDelete ? { deletedAt: null } : {}),
       ...filter,
       ...(treeId ? { treeId } : {}),
       ...dateRange,
+      ...fieldFilters,
     };
   }
 

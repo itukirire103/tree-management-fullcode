@@ -166,6 +166,23 @@ export const replantCreateSchema = z
   .strict();
 export const replantUpdateSchema = replantCreateSchema.partial();
 
+export const scheduleCreateSchema = z
+  .object({
+    scheduleNumber: z.string().min(1, "予定番号は必須です。"),
+    scheduleType: z.enum(["inspection", "work"]),
+    treeId: uuid(),
+    plannedDate: dateField(),
+    workType: z
+      .enum(["pruning", "felling", "stumpRemoval", "stakeWork", "fertilizing", "soilImprovement", "other"])
+      .optional()
+      .nullable(),
+    status: z.enum(["planned", "inProgress", "done", "canceled"]).optional(),
+    vendorId: uuid().optional().nullable(),
+    memo: z.string().optional().nullable(),
+  })
+  .strict();
+export const scheduleUpdateSchema = scheduleCreateSchema.partial();
+
 export const complaintCreateSchema = z
   .object({
     complaintNumber: z.string().min(1, "苦情記録番号は必須です。"),
@@ -223,7 +240,16 @@ export const rolePermissionUpdateSchema = z
         z
           .object({
             role: z.enum(["facility_admin", "ward_staff", "contractor", "partner_admin", "readonly_other"]),
-            entity: z.enum(["tree", "diagnosis", "inspection", "workHistory", "replant", "complaint", "vendor"]),
+            entity: z.enum([
+              "tree",
+              "diagnosis",
+              "inspection",
+              "workHistory",
+              "replant",
+              "complaint",
+              "vendor",
+              "schedule",
+            ]),
             action: z.enum(["create", "read", "update", "delete"]),
             scope: z.enum(["global", "area", "own", "none"]),
           })

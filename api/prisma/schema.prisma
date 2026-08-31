@@ -227,6 +227,7 @@ model Tree {
   inspections  Inspection[]
   workHistories WorkHistory[]
   complaints   Complaint[]
+  schedules    Schedule[]
   replantsAsOld Replant[] @relation("ReplantOldTree")
   replantsAsNew Replant[] @relation("ReplantNewTree")
 
@@ -336,6 +337,7 @@ model Vendor {
 
   users         User[]
   workHistories WorkHistory[]
+  schedules     Schedule[]
   vendorAreas   VendorArea[]
 
   @@map("vendors")
@@ -392,6 +394,43 @@ model WorkHistoryPhoto {
   file        File        @relation(fields: [fileId], references: [id])
 
   @@map("work_history_photos")
+}
+
+enum ScheduleType {
+  inspection @map("点検予定")
+  work       @map("作業予定")
+}
+
+enum ScheduleStatus {
+  planned    @map("予定")
+  inProgress @map("進行中")
+  done       @map("完了")
+  canceled   @map("中止")
+}
+
+// 機能要件#24(定期点検や作業予定を登録できること)。Inspection/WorkHistoryは
+// 実施済みの実績記録のみを表すため、未来の予定を表す専用テーブルとして分離する。
+// 完了後は運用者が別途Inspection/WorkHistoryへ実績を記録し、この行のstatusを
+// doneに更新する(自動連携は行わない。DataverseのPower Automateに相当する
+// 複雑な自動化はスコープ外とする方針を踏襲)。
+model Schedule {
+  id           String         @id @default(uuid())
+  scheduleNumber String       @map("schedule_number")
+  scheduleType ScheduleType   @map("schedule_type")
+  treeId       String         @map("tree_id")
+  plannedDate  DateTime       @map("planned_date") @db.Date
+  workType     WorkType?      @map("work_type")
+  status       ScheduleStatus @default(planned)
+  vendorId     String?        @map("vendor_id")
+  memo         String?
+  deletedAt    DateTime?      @map("deleted_at")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  tree   Tree    @relation(fields: [treeId], references: [id])
+  vendor Vendor? @relation(fields: [vendorId], references: [id])
+
+  @@map("schedules")
 }
 
 model Replant {

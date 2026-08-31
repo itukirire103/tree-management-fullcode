@@ -16,6 +16,7 @@ const AREA_FILTER_CONFIG: Record<Entity, AreaFilterConfig | null> = {
   diagnosis: { kind: "viaTree", treeField: "tree" },
   inspection: { kind: "viaTree", treeField: "tree" },
   workHistory: { kind: "viaTree", treeField: "tree" },
+  schedule: { kind: "viaTree", treeField: "tree" },
   // replantはold/newどちらかの樹木が担当エリアに含まれれば閲覧可とする
   replant: { kind: "viaEitherTree", treeFields: ["oldTree", "newTree"] },
   vendor: null, // vendorはown scopeのみ(下記で別処理)
@@ -83,10 +84,10 @@ export async function checkPermissionAndGetFilter(
     const filter: Record<string, unknown> = {
       [config.treeField]: { is: { routeNumber: { in: routeNumbers } } },
     };
-    // 街路樹管理委託事業者の作業履歴アクセスは要件上「自社実施分のみ」。
+    // 街路樹管理委託事業者の作業履歴・予定アクセスは要件上「自社実施(予定)分のみ」。
     // 協定管理者(partner_admin)は同じviaTree設定でも担当エリア全体を見てよいため、
     // contractorロールに限定してvendorIdでの絞り込みを追加する。
-    if (entity === "workHistory" && user.role === "contractor") {
+    if ((entity === "workHistory" || entity === "schedule") && user.role === "contractor") {
       if (!user.vendorId) return { id: { in: [] } };
       filter.vendorId = user.vendorId;
     }

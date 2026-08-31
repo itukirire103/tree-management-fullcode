@@ -78,6 +78,17 @@ export const COMPLAINT_STATUS_LABELS: Record<ComplaintStatus, string> = {
   resolved: "対応済",
 };
 
+export type ScheduleType = "inspection" | "work";
+export const SCHEDULE_TYPE_LABELS: Record<ScheduleType, string> = { inspection: "点検予定", work: "作業予定" };
+
+export type ScheduleStatus = "planned" | "inProgress" | "done" | "canceled";
+export const SCHEDULE_STATUS_LABELS: Record<ScheduleStatus, string> = {
+  planned: "予定",
+  inProgress: "進行中",
+  done: "完了",
+  canceled: "中止",
+};
+
 export type Tree = {
   id: string;
   treeNumber: string;
@@ -198,6 +209,28 @@ export type Complaint = {
   responseRecord: string | null;
   status: ComplaintStatus;
   createdAt: string;
+};
+
+export type Schedule = {
+  id: string;
+  scheduleNumber: string;
+  scheduleType: ScheduleType;
+  treeId: string;
+  plannedDate: string;
+  workType: WorkType | null;
+  status: ScheduleStatus;
+  vendorId: string | null;
+  memo: string | null;
+  createdAt: string;
+};
+
+export type CalendarEvent = {
+  id: string;
+  category: "complaint" | "schedule" | "workHistory";
+  date: string;
+  path: string;
+  label: string;
+  subLabel: string | null;
 };
 
 export type Area = {

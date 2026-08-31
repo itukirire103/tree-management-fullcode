@@ -14,11 +14,13 @@ import { UserManagementPage } from "./features/settings/UserManagementPage";
 import { AuditLogPage } from "./features/audit/AuditLogPage";
 import { EntityListPage } from "./entities/EntityListPage";
 import { EntityFormPage } from "./entities/EntityFormPage";
+import { CalendarPage } from "./features/calendar/CalendarPage";
 import {
   complaintEntity,
   diagnosisEntity,
   inspectionEntity,
   replantEntity,
+  scheduleEntity,
   treeEntity,
   vendorEntity,
   workHistoryEntity,
@@ -39,6 +41,7 @@ const TREE_LINKED_ROUTE_ENTITIES: { entity: EntityDef<any>; fixedFieldKeys: stri
   { entity: diagnosisEntity, fixedFieldKeys: ["treeId"] },
   { entity: inspectionEntity, fixedFieldKeys: ["treeId"] },
   { entity: workHistoryEntity, fixedFieldKeys: ["treeId"] },
+  { entity: scheduleEntity, fixedFieldKeys: ["treeId"] },
   { entity: complaintEntity, fixedFieldKeys: ["treeId"] },
 ];
 
@@ -57,6 +60,7 @@ function App() {
               }
             >
               <Route index element={<MapPage />} />
+              <Route path="/calendar" element={<CalendarPage />} />
 
               <Route path="/trees" element={<EntityListPage entity={treeEntity} rowLinkLabel="詳細" />} />
               <Route

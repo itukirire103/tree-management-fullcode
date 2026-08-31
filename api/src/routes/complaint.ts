@@ -11,4 +11,9 @@ export const complaintRouter = createCrudRouter({
   updateSchema: complaintUpdateSchema,
   exportColumns: COMPLAINT_EXPORT_COLUMNS,
   dateFilterField: "requestDate",
+  filterFields: [
+    { key: "complaintNumber", mode: "text" },
+    { key: "status", mode: "select" },
+    { key: "routeNumber", mode: "text" },
+  ],
 });

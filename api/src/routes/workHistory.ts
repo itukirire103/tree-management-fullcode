@@ -33,6 +33,11 @@ export const workHistoryRouter: Router = createCrudRouter({
   updateSchema: workHistoryUpdateSchema,
   exportColumns: WORK_HISTORY_EXPORT_COLUMNS,
   dateFilterField: "workDate",
+  filterFields: [
+    { key: "workNumber", mode: "text" },
+    { key: "workType", mode: "select" },
+    { key: "performerType", mode: "select" },
+  ],
 });
 
 // 機能要件#25: 指定した期間の作業予定簿内訳を所定の様式でPDF出力する。

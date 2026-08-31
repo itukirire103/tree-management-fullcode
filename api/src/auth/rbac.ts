@@ -22,7 +22,8 @@ export type Entity =
   | "workHistory"
   | "replant"
   | "complaint"
-  | "vendor";
+  | "vendor"
+  | "schedule";
 
 export const ENTITIES: Entity[] = [
   "tree",
@@ -32,6 +33,7 @@ export const ENTITIES: Entity[] = [
   "replant",
   "complaint",
   "vendor",
+  "schedule",
 ];
 
 export const NONE_PERMISSION: Permission = { create: "none", read: "none", update: "none", delete: "none" };
@@ -90,6 +92,15 @@ export const DEFAULT_PERMISSION_MATRIX: Record<Entity, Partial<Record<Role, Perm
     contractor: { create: "none", read: "own", update: "none", delete: "none" },
     partner_admin: { create: "none", read: "own", update: "none", delete: "none" },
     // readonly_otherはvendorへのアクセス権なし
+  },
+  // 機能要件#24(定期点検・作業予定の登録)。workHistoryと同じ考え方
+  // (実施主体である区職員/委託事業者は担当範囲内で予定も管理できる)を踏襲する。
+  schedule: {
+    facility_admin: { create: "global", read: "global", update: "global", delete: "none" },
+    ward_staff: { create: "global", read: "global", update: "global", delete: "none" },
+    contractor: { create: "area", read: "area", update: "area", delete: "none" },
+    partner_admin: { create: "none", read: "area", update: "none", delete: "none" },
+    readonly_other: { create: "none", read: "global", update: "none", delete: "none" },
   },
 };
 

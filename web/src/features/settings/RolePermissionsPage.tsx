@@ -6,6 +6,7 @@ import {
   diagnosisEntity,
   inspectionEntity,
   replantEntity,
+  scheduleEntity,
   treeEntity,
   vendorEntity,
   workHistoryEntity,
@@ -18,12 +19,13 @@ type PermissionRow = { entity: string; role: Role; action: Action; scope: Scope 
 // system_admin以外の5ロール。system_adminは常にフル権限固定でAPIも一覧に含めない。
 const ROLE_ORDER: Role[] = ["facility_admin", "ward_staff", "contractor", "partner_admin", "readonly_other"];
 
-const ENTITY_ORDER = ["tree", "diagnosis", "inspection", "workHistory", "replant", "complaint", "vendor"];
+const ENTITY_ORDER = ["tree", "diagnosis", "inspection", "workHistory", "schedule", "replant", "complaint", "vendor"];
 const ENTITY_LABELS: Record<string, string> = {
   tree: treeEntity.label,
   diagnosis: diagnosisEntity.label,
   inspection: inspectionEntity.label,
   workHistory: workHistoryEntity.label,
+  schedule: scheduleEntity.label,
   replant: replantEntity.label,
   complaint: complaintEntity.label,
   vendor: vendorEntity.label,

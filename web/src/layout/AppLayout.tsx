@@ -2,7 +2,7 @@ import { useState } from "react";
 import { NavLink, Outlet } from "react-router";
 import { useAuth } from "../auth/AuthContext";
 import { ROLE_LABELS } from "../lib/types";
-import { canViewVendors } from "../lib/permissions";
+import { canViewVendors, canViewComplaints } from "../lib/permissions";
 
 const ADMIN_ROLES = new Set(["system_admin", "facility_admin"]);
 
@@ -36,6 +36,17 @@ export function AppLayout() {
           <NavLink to="/trees/stats" onClick={closeNav}>
             数量集計
           </NavLink>
+          <NavLink to="/calendar" onClick={closeNav}>
+            カレンダー
+          </NavLink>
+          <NavLink to="/schedules" onClick={closeNav}>
+            点検・作業予定
+          </NavLink>
+          {user && canViewComplaints(user.role) && (
+            <NavLink to="/complaints" onClick={closeNav}>
+              苦情・要望
+            </NavLink>
+          )}
           {user && canViewVendors(user.role) && (
             <NavLink to="/vendors" onClick={closeNav}>
               委託事業者
