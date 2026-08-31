@@ -2,6 +2,8 @@
 
 > 東京都港区の公募資料をベースにした樹木管理システムのポートフォリオ — フルコーディング版
 
+🚀 **本番デプロイ済み**: https://tree-management-fullcode.onrender.com (Render無料枠。コールドスタートで初回アクセスに30〜60秒かかることがあります)
+
 [`../樹木管理システム`](../樹木管理システム)(Power Platform/Dataverse版)と同じ要件定義・ドメインモデルを、フルコーディング(Node.js + React + PostgreSQL)で再実装したもの。
 
 ## なぜフルコーディングで作り直したか
@@ -56,8 +58,7 @@ npm run dev               # http://localhost:5173
 - [x] Phase 2: 7エンティティのCRUD API + フロントエンドCRUD画面(FieldConfig駆動の汎用一覧/フォーム)、認証画面、樹木起点のサブグリッドUI(TreeDetailPage)、エリア割当て管理画面
 - [x] Phase 3: 地図機能(Leaflet)。bboxスコープAPI+クラスタリング、健全度による色分け、ホバー表示、クリックで詳細、ドラッグで位置修正、空き地クリックで新規登録。Playwrightでの実ブラウザ動作確認済み
 - [x] Phase 4: MFA(TOTP)・監査ログ閲覧UI・バックアップ/リストア実証・5,200件規模でのページング/性能検証・負荷テストまで完了
-- [x] Phase 5(準備): Renderデプロイ設定(`render.yaml`)・手順書(`DEPLOY.md`)を整備
-- [ ] Phase 5(残り): 実際のRenderデプロイ実行・Cloudflare R2への実接続(要各自のアカウント認証情報のため未実施)
+- [x] Phase 5: Render実デプロイ完了(https://tree-management-fullcode.onrender.com)、Cloudflare R2への実接続(アップロード/署名付きURLダウンロード/削除)を本番環境で確認済み
 
 ## 仕様書要件との突き合わせで見つかった主な乖離と対応
 
