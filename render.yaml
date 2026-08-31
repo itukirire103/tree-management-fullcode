@@ -3,13 +3,18 @@ services:
     name: tree-management-fullcode
     runtime: node
     plan: free
-    region: oregon
+    # NeonがAWS us-east-2(Ohio)のため、往復レイテンシを減らすためRenderもohioに揃える
+    # (README「性能検証」章の実測に基づく判断)。
+    region: ohio
     rootDir: .
     # web(SPA)をビルドしてapi/dist配信対象に含めてから、api自体をビルドする。
     # api/src/app.tsは本番時にAPI+SPAを同一オリジンで配信する設計になっている。
+    # --include=devが必須: NODE_ENV=production環境変数下ではnpm ciが既定で
+    # devDependenciesを省略してしまい、vite/typescript等が入らずビルドが失敗する
+    # (実際にRenderへの初回デプロイで再現・特定した)。
     buildCommand: >-
-      cd web && npm ci && npm run build &&
-      cd ../api && npm ci &&
+      cd web && npm ci --include=dev && npm run build &&
+      cd ../api && npm ci --include=dev &&
       npx prisma generate &&
       npx prisma migrate deploy &&
       npm run build
