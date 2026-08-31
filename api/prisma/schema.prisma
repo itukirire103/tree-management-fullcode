@@ -4,6 +4,12 @@
 
 generator client {
   provider = "prisma-client-js"
+  // ローカル開発(Windows)向けの"native"に加え、Azure App Service(Linux)への
+  // デプロイでdist成果物+node_modulesをそのままzip配置する運用のため、
+  // Linux向けエンジンバイナリも明示的に生成しておく(Renderは向こうのビルド機が
+  // Linuxのためnative任せで済んだが、Azureはローカルビルド→zipデプロイのため
+  // クロスプラットフォームでのバイナリ同梱が必要)。
+  binaryTargets = ["native", "debian-openssl-3.0.x", "debian-openssl-1.1.x"]
 }
 
 datasource db {

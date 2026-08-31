@@ -2,6 +2,7 @@ import path from "node:path";
 import type { FileStorage } from "./types.js";
 import { LocalFileStorage } from "./localStorage.js";
 import { S3FileStorage } from "./s3Storage.js";
+import { AzureBlobFileStorage } from "./azureBlobStorage.js";
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -18,6 +19,13 @@ function createFileStorage(): FileStorage {
       bucket: requireEnv("S3_BUCKET"),
       accessKeyId: requireEnv("S3_ACCESS_KEY_ID"),
       secretAccessKey: requireEnv("S3_SECRET_ACCESS_KEY"),
+    });
+  }
+  if (driver === "azure") {
+    return new AzureBlobFileStorage({
+      accountName: requireEnv("AZURE_STORAGE_ACCOUNT"),
+      accountKey: requireEnv("AZURE_STORAGE_KEY"),
+      containerName: requireEnv("AZURE_STORAGE_CONTAINER"),
     });
   }
   return new LocalFileStorage(path.resolve(process.env.STORAGE_LOCAL_DIR ?? "./storage"));
