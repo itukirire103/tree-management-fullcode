@@ -1068,37 +1068,43 @@ textarea {
 
 .calendar-legend {
   display: flex;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 12px;
   font-size: 0.85em;
-  color: var(--color-text-muted);
 }
 
-.calendar-legend-item::before {
-  content: "";
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 6px;
+/* 凡例はカテゴリ色そのものを背景にしたピル表示にする(丸ドット+文字だと、
+   文字色が既定の濃色のままで背景色によってはコントラストが不足していたため)。
+   文字は常に白固定にし、どのカテゴリ色でも読める組み合わせだけを使う。 */
+.calendar-legend-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: white;
+  font-weight: 500;
 }
 
-.calendar-cat-complaint {
+.calendar-legend-item.calendar-cat-complaint {
   background: var(--color-danger);
 }
-.calendar-legend-item.calendar-cat-complaint::before {
+.calendar-legend-item.calendar-cat-schedule {
+  background: var(--color-primary);
+}
+.calendar-legend-item.calendar-cat-workHistory {
+  background: #6b5a1f;
+}
+
+/* 日マス・日別詳細内の小さいドットには従来通りカテゴリ色を使う(ここは背景に
+   文字を重ねないため、対比を気にせずカテゴリ色そのままでよい)。 */
+.calendar-dot.calendar-cat-complaint {
   background: var(--color-danger);
 }
-.calendar-cat-schedule {
+.calendar-dot.calendar-cat-schedule {
   background: var(--color-primary);
 }
-.calendar-legend-item.calendar-cat-schedule::before {
-  background: var(--color-primary);
-}
-.calendar-cat-workHistory {
-  background: #8a6d3b;
-}
-.calendar-legend-item.calendar-cat-workHistory::before {
+.calendar-dot.calendar-cat-workHistory {
   background: #8a6d3b;
 }
 
