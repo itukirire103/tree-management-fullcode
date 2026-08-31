@@ -1,8 +1,8 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { getAuditUserId } from "./context.js";
 
-// 監査対象は業務ドメインの7テーブル+添付ファイル+権限マトリクス。
-// 認証・セッション関連(User/RefreshToken等)やarea/audit_log自体は対象外。
+// 監査対象は業務ドメインの7テーブル+添付ファイル+権限マトリクス+アカウント管理。
+// RefreshToken等の純粋なセッション管理テーブルやarea/audit_log自体は対象外。
 const AUDITED_MODELS = new Set([
   "Tree",
   "Diagnosis",
@@ -13,7 +13,15 @@ const AUDITED_MODELS = new Set([
   "Complaint",
   "File",
   "RolePermission",
+  "User",
 ]);
+
+// UserモデルはpasswordHash/totpSecretという機密情報を持つため、他モデルと同じように
+// 行全体をそのままdiffへ書き出すと監査ログにハッシュ値等が残ってしまう。
+// モデルごとに除外するキーを指定できるようにし、Userだけ機密フィールドを取り除く。
+const REDACTED_FIELDS: Partial<Record<string, string[]>> = {
+  User: ["passwordHash", "totpSecret"],
+};
 
 type AuditAction = "INSERT" | "UPDATE" | "DELETE";
 
@@ -22,6 +30,14 @@ type AuditAction = "INSERT" | "UPDATE" | "DELETE";
 // (Decimal/DateはどちらもtoJSON()を持つため、文字列として安全にシリアライズされる)。
 function toJsonSafe(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+}
+
+function redact(model: string, record: unknown): unknown {
+  const fields = REDACTED_FIELDS[model];
+  if (!fields || typeof record !== "object" || record === null) return record;
+  const clone = { ...(record as Record<string, unknown>) };
+  for (const field of fields) delete clone[field];
+  return clone;
 }
 
 /**
@@ -42,21 +58,21 @@ export function createAuditExtension(auditWriter: PrismaClient) {
         async create({ model, args, query }) {
           const result = await query(args);
           if (AUDITED_MODELS.has(model)) {
-            await writeAuditLog(auditWriter, model, extractId(result), "INSERT", { after: result });
+            await writeAuditLog(auditWriter, model, extractId(result), "INSERT", { after: redact(model, result) });
           }
           return result;
         },
         async update({ model, args, query }) {
           const result = await query(args);
           if (AUDITED_MODELS.has(model)) {
-            await writeAuditLog(auditWriter, model, extractId(result), "UPDATE", { after: result });
+            await writeAuditLog(auditWriter, model, extractId(result), "UPDATE", { after: redact(model, result) });
           }
           return result;
         },
         async delete({ model, args, query }) {
           const result = await query(args);
           if (AUDITED_MODELS.has(model)) {
-            await writeAuditLog(auditWriter, model, extractId(result), "DELETE", { before: result });
+            await writeAuditLog(auditWriter, model, extractId(result), "DELETE", { before: redact(model, result) });
           }
           return result;
         },
@@ -65,7 +81,7 @@ export function createAuditExtension(auditWriter: PrismaClient) {
         async upsert({ model, args, query }) {
           const result = await query(args);
           if (AUDITED_MODELS.has(model)) {
-            await writeAuditLog(auditWriter, model, extractId(result), "UPDATE", { after: result });
+            await writeAuditLog(auditWriter, model, extractId(result), "UPDATE", { after: redact(model, result) });
           }
           return result;
         },

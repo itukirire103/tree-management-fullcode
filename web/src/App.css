@@ -57,11 +57,20 @@ textarea {
   flex: 1;
 }
 
+.app-nav {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
 .app-nav a {
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
   padding: 6px 4px;
   border-bottom: 2px solid transparent;
+  /* 項目数が増えてもラベルが単語の途中(例:「樹木」+「一覧」)で
+     折り返されて読みにくくならないようにする。幅が足りない場合は
+     app-navごと折り返す(上のflex-wrap)。 */
+  white-space: nowrap;
 }
 
 .app-nav a.active,
@@ -85,6 +94,17 @@ textarea {
   padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.app-nav-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.4em;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
 }
 
 .mfa-nav-link {
@@ -516,6 +536,90 @@ textarea {
   border-radius: 4px;
 }
 
+/* ---- アカウント管理 ---- */
+
+.user-create-form {
+  background: var(--color-surface);
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.user-create-form h2 {
+  font-size: 1em;
+  margin-top: 0;
+}
+
+.user-create-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.user-create-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9em;
+}
+
+.user-create-form input,
+.user-create-form select {
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.user-create-form button {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.user-management-page .entity-table select {
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.user-password-reset {
+  margin-top: 16px;
+  background: var(--color-surface);
+  padding: 16px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  max-width: 420px;
+}
+
+.user-password-reset label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9em;
+  flex: 1;
+}
+
+.user-password-reset input {
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.user-password-reset button {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
 /* ---- FileSelect / PhotoManager ---- */
 
 .file-select-current {
@@ -725,7 +829,11 @@ textarea {
 
 .map-page {
   position: relative;
-  height: calc(100vh - 96px);
+  /* .app-mainは既にflex:1で残り高さいっぱいに広がるため、ここは100%でよい。
+     固定値からの引き算(calc(100vh - 96px)等)にすると、モバイルでヘッダーが
+     ハンバーガーメニューの開閉で可変高さになった際にずれてしまうため避ける。 */
+  height: 100%;
+  min-height: 320px;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -786,4 +894,133 @@ textarea {
   border-radius: 20px;
   font-size: 0.8em;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.map-geolocation {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  z-index: 1000;
+}
+
+.map-geolocation button {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 24px;
+  font-size: 0.9em;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.map-geolocation button:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.map-geolocation-error {
+  margin-top: 6px;
+  background: white;
+  color: var(--color-danger);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.8em;
+  max-width: 240px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ---- モバイル対応(機能要件#22/ネットワーク要件#22: 現場のスマホ・タブレットからの利用) ---- */
+
+@media (max-width: 768px) {
+  .app-header {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px 16px;
+    row-gap: 8px;
+  }
+
+  .app-title {
+    flex: 1;
+  }
+
+  .app-nav-toggle {
+    display: block;
+  }
+
+  .app-nav,
+  .app-user {
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-basis: 100%;
+    gap: 10px;
+  }
+
+  .app-nav.app-nav-open,
+  .app-user.app-nav-open {
+    display: flex;
+  }
+
+  .app-user {
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    padding-top: 10px;
+  }
+
+  .app-main {
+    padding: 12px;
+  }
+
+  /* テーブルは画面幅に収まらないことが多いため、内部の行構造を保ったまま
+     table要素自体を横スクロールコンテナ化する(各セルの折り返しを防ぎ、
+     スワイプで全列を確認できるようにする)。 */
+  .entity-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .entity-list-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .tree-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .tree-summary dt {
+    margin-top: 8px;
+  }
+
+  .tree-summary dt:first-child {
+    margin-top: 0;
+  }
+
+  .area-create-form,
+  .user-password-reset {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .map-geolocation {
+    left: 8px;
+    bottom: 8px;
+  }
+
+  .map-hint {
+    max-width: calc(100% - 32px);
+    text-align: center;
+  }
+
+  /* 凡例を右下(現在地登録ボタンと同じ帯)から右上へ移動し、重なりを避ける。
+     上部中央のヒント吹き出し(最大3行程度)と衝突しないよう、その下に余白を空ける。 */
+  .map-legend {
+    top: 110px;
+    bottom: auto;
+    right: 8px;
+    padding: 8px 10px;
+    font-size: 0.85em;
+  }
 }

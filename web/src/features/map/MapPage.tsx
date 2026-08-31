@@ -60,9 +60,40 @@ export function MapPage() {
   const { user } = useAuth();
   const [points, setPoints] = useState<TreeMapPoint[]>([]);
   const fetchTimer = useRef<number | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const canCreate = user ? canCreateTree(user.role) : false;
   const canEdit = user ? canEditTree(user.role) : false;
+
+  // 機能要件#33: スマートフォン等から位置情報を自動取得し、現在地に樹木を登録できるようにする。
+  // 空き地クリックでの新規登録(NewTreeClickHandler)と同じ導線(/trees/new?latitude=..&longitude=..)
+  // に位置情報だけ現在地から取得して合流させる。
+  const handleUseCurrentLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocationError("この端末では位置情報を取得できません。");
+      return;
+    }
+    setLocating(true);
+    setLocationError(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocating(false);
+        navigate(
+          `/trees/new?latitude=${position.coords.latitude.toFixed(6)}&longitude=${position.coords.longitude.toFixed(6)}`
+        );
+      },
+      (error) => {
+        setLocating(false);
+        setLocationError(
+          error.code === error.PERMISSION_DENIED
+            ? "位置情報の利用が許可されていません。ブラウザの設定を確認してください。"
+            : "現在地を取得できませんでした。"
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10_000 }
+    );
+  }, [navigate]);
 
   const fetchPoints = useCallback((bounds: L.LatLngBounds) => {
     if (fetchTimer.current) window.clearTimeout(fetchTimer.current);
@@ -134,6 +165,14 @@ export function MapPage() {
       </div>
       {canCreate && (
         <p className="map-hint">地図上の空いている場所をクリックすると、その位置に新しい樹木を登録できます。</p>
+      )}
+      {canCreate && (
+        <div className="map-geolocation">
+          <button type="button" onClick={handleUseCurrentLocation} disabled={locating}>
+            {locating ? "現在地を取得中..." : "📍 現在地に樹木を登録"}
+          </button>
+          {locationError && <p className="map-geolocation-error">{locationError}</p>}
+        </div>
       )}
     </div>
   );

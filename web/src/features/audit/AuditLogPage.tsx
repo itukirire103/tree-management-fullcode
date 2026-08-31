@@ -53,7 +53,18 @@ export function AuditLogPage() {
           }}
         >
           <option value="">(すべてのテーブル)</option>
-          {["Tree", "Diagnosis", "Inspection", "WorkHistory", "Vendor", "Replant", "Complaint", "File"].map((t) => (
+          {[
+            "Tree",
+            "Diagnosis",
+            "Inspection",
+            "WorkHistory",
+            "Vendor",
+            "Replant",
+            "Complaint",
+            "File",
+            "RolePermission",
+            "User",
+          ].map((t) => (
             <option key={t} value={t}>
               {t}
             </option>

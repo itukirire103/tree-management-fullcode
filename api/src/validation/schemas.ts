@@ -181,6 +181,30 @@ export const complaintCreateSchema = z
   .strict();
 export const complaintUpdateSchema = complaintCreateSchema.partial();
 
+// 機能要件#2: アカウントの登録・変更・停止。system_adminは権限マトリクス編集と
+// 同様にコード側で固定の扱いのため、この画面からは新規付与できない(役割の選択肢から除外)。
+const ASSIGNABLE_ROLE = z.enum(["facility_admin", "ward_staff", "contractor", "partner_admin", "readonly_other"]);
+
+export const userCreateSchema = z
+  .object({
+    email: z.email("有効なメールアドレスを指定してください。"),
+    password: z.string().min(8, "パスワードは8文字以上にしてください。"),
+    displayName: z.string().min(1, "表示名は必須です。"),
+    role: ASSIGNABLE_ROLE,
+    vendorId: uuid().optional().nullable(),
+  })
+  .strict();
+
+export const userUpdateSchema = z
+  .object({
+    displayName: z.string().min(1, "表示名は必須です。").optional(),
+    role: ASSIGNABLE_ROLE.optional(),
+    vendorId: uuid().optional().nullable(),
+    isActive: z.boolean().optional(),
+    password: z.string().min(8, "パスワードは8文字以上にしてください。").optional(),
+  })
+  .strict();
+
 // 機能要件#3: 権限マトリクス(role_permissions)の一括更新用。system_adminはコード側で
 // 固定のため許可ロールから除外する(送られてきても400で弾く)。
 export const rolePermissionUpdateSchema = z
