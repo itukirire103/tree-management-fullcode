@@ -59,7 +59,12 @@ function App() {
               <Route index element={<MapPage />} />
 
               <Route path="/trees" element={<EntityListPage entity={treeEntity} rowLinkLabel="詳細" />} />
-              <Route path="/trees/new" element={<EntityFormPage entity={treeEntity} backTo="/trees" />} />
+              <Route
+                path="/trees/new"
+                element={
+                  <EntityFormPage entity={treeEntity} backTo="/trees" fixedFieldKeys={["latitude", "longitude"]} />
+                }
+              />
               <Route path="/trees/stats" element={<TreeStatsPage />} />
               <Route path="/trees/:id" element={<TreeDetailPage />} />
               <Route path="/trees/:id/edit" element={<EntityFormPage entity={treeEntity} />} />
